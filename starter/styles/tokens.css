@@ -1,0 +1,295 @@
+/* ============================================================
+   デザイントークン — Material 3 Expressive
+
+   Google は Web 向けの公式実装を出していない（@material/web は保守モードで
+   Expressive 非対応）。だから m3.material.io の仕様（色・形・字・動き）を
+   このファイルと components.css で CSS に起こしてある。
+
+   層は2つ:
+     1. m3-scheme.css（生成物）… --md-sys-color-* 。シード色 1 つから
+        HCT で算出したライト/ダークの配色。scripts/gen-m3-scheme.mjs
+     2. このファイル … その短い別名、形・字・間隔・動き・外殻の幾何
+
+   ★ぼかしは使わない★ backdrop-filter は 1 箇所も書かない。層は M3 の
+   surface container（5段の明度）と elevation（影）で作る。
+   ============================================================ */
+
+@import './m3-scheme.css';
+
+/* ============================================================
+   色 — ★:root だけでなく [data-theme] にも当てる★
+
+   カスタムプロパティの var() は**その要素で**算出値に解決されてから継承される。
+   画面の一部だけ明暗を変えたいとき（記事だけ暗く、プレビューだけ明るく）は
+   その要素に data-theme を書くことになるが、別名を :root にだけ置くと
+   子には「:root で解決済みの色」が継承され、m3-scheme.css がその要素の
+   --md-sys-color-* を書き換えても別名が追従しない。
+   data-theme を持つ要素で別名を再宣言すれば、その要素の --md-sys-color-* で
+   解決し直される。
+
+   ★色に関わるものだけをここに置く★ 動きの --d-* をここに入れると、
+   視差低減の @media（:root に書く）が [data-theme] の再宣言に負ける。
+   ============================================================ */
+:root,
+[data-theme] {
+  /* ------------------------------------------------ 色（M3 の役割名の短縮） */
+  --primary: var(--md-sys-color-primary);
+  --on-primary: var(--md-sys-color-on-primary);
+  --primary-container: var(--md-sys-color-primary-container);
+  --on-primary-container: var(--md-sys-color-on-primary-container);
+  --primary-fixed: var(--md-sys-color-primary-fixed);
+  --primary-fixed-dim: var(--md-sys-color-primary-fixed-dim);
+  --on-primary-fixed: var(--md-sys-color-on-primary-fixed);
+  --on-primary-fixed-variant: var(--md-sys-color-on-primary-fixed-variant);
+
+  --secondary: var(--md-sys-color-secondary);
+  --on-secondary: var(--md-sys-color-on-secondary);
+  --secondary-container: var(--md-sys-color-secondary-container);
+  --on-secondary-container: var(--md-sys-color-on-secondary-container);
+  --secondary-fixed: var(--md-sys-color-secondary-fixed);
+  --secondary-fixed-dim: var(--md-sys-color-secondary-fixed-dim);
+  --on-secondary-fixed: var(--md-sys-color-on-secondary-fixed);
+  --on-secondary-fixed-variant: var(--md-sys-color-on-secondary-fixed-variant);
+
+  --tertiary: var(--md-sys-color-tertiary);
+  --on-tertiary: var(--md-sys-color-on-tertiary);
+  --tertiary-container: var(--md-sys-color-tertiary-container);
+  --on-tertiary-container: var(--md-sys-color-on-tertiary-container);
+  --tertiary-fixed: var(--md-sys-color-tertiary-fixed);
+  --tertiary-fixed-dim: var(--md-sys-color-tertiary-fixed-dim);
+  --on-tertiary-fixed: var(--md-sys-color-on-tertiary-fixed);
+  --on-tertiary-fixed-variant: var(--md-sys-color-on-tertiary-fixed-variant);
+
+  --error: var(--md-sys-color-error);
+  --on-error: var(--md-sys-color-on-error);
+  --error-container: var(--md-sys-color-error-container);
+  --on-error-container: var(--md-sys-color-on-error-container);
+
+  /* 面。5段の container が「高さ」を表す（ライトでは lowest が最も明るく、
+     ダークでは highest が最も明るい。どちらでも highest が最も"手前"）。
+       surface        … 画面の地
+       surface-lowest … 地より沈めたい面（ライトでは白）
+       surface-low    … シート
+       surface-mid    … パネル・カード・ナビゲーションバー
+       surface-high   … ダイアログ・通知カード・浮くツールバー
+       surface-highest… 入力欄（filled）・トラック・骨 */
+  --surface: var(--md-sys-color-surface);
+  --surface-dim: var(--md-sys-color-surface-dim);
+  --surface-bright: var(--md-sys-color-surface-bright);
+  --surface-lowest: var(--md-sys-color-surface-container-lowest);
+  --surface-low: var(--md-sys-color-surface-container-low);
+  --surface-mid: var(--md-sys-color-surface-container);
+  --surface-high: var(--md-sys-color-surface-container-high);
+  --surface-highest: var(--md-sys-color-surface-container-highest);
+  --on-surface: var(--md-sys-color-on-surface);
+  --on-surface-variant: var(--md-sys-color-on-surface-variant);
+  --outline: var(--md-sys-color-outline);
+  --outline-variant: var(--md-sys-color-outline-variant);
+  --inverse-surface: var(--md-sys-color-inverse-surface);
+  --inverse-on-surface: var(--md-sys-color-inverse-on-surface);
+  --inverse-primary: var(--md-sys-color-inverse-primary);
+  --surface-tint: var(--md-sys-color-surface-tint);
+
+  /* rgb 三つ組（透過を作るときだけ使う） */
+  --primary-rgb: var(--md-sys-color-primary-rgb);
+  --on-surface-rgb: var(--md-sys-color-on-surface-rgb);
+  --on-surface-variant-rgb: var(--md-sys-color-on-surface-variant-rgb);
+  --surface-rgb: var(--md-sys-color-surface-rgb);
+  --error-rgb: var(--md-sys-color-error-rgb);
+  --shadow-rgb: var(--md-sys-color-shadow-rgb);
+  --scrim-rgb: var(--md-sys-color-scrim-rgb);
+
+  /* 状態レイヤー（M3: hover 8% / focus 10% / pressed 10% / dragged 16%）。
+     押下は「地の上に on-色を薄く重ねる」で作る。縮めない・透けさせない */
+  --state-hover: 0.08;
+  --state-focus: 0.1;
+  --state-pressed: 0.1;
+  --state-dragged: 0.16;
+  --hover-on-surface: rgb(var(--on-surface-rgb) / var(--state-hover));
+  --pressed-on-surface: rgb(var(--on-surface-rgb) / var(--state-pressed));
+  --pressed-primary: rgb(var(--primary-rgb) / var(--state-pressed));
+
+  /* 暗幕（M3: scrim 32%）。シート・ダイアログの背後。
+     **背後が触れないことを示す唯一の合図** */
+  --scrim: rgb(var(--scrim-rgb) / 0.32);
+  /* 全画面ビューアの地。写真・動画の外側に見える色なので必ず黒 */
+  --behind: #000000;
+
+  /* ------------------------------------------------ 影（M3 elevation level 1〜5）
+     M3 の影は umbra（近い・濃い）と penumbra（遠い・薄い）の2層 */
+  --elev-1:
+    0 1px 2px rgb(var(--shadow-rgb) / 0.3),
+    0 1px 3px 1px rgb(var(--shadow-rgb) / 0.15);
+  --elev-2:
+    0 1px 2px rgb(var(--shadow-rgb) / 0.3),
+    0 2px 6px 2px rgb(var(--shadow-rgb) / 0.15);
+  --elev-3:
+    0 1px 3px rgb(var(--shadow-rgb) / 0.3),
+    0 4px 8px 3px rgb(var(--shadow-rgb) / 0.15);
+  --elev-4:
+    0 2px 3px rgb(var(--shadow-rgb) / 0.3),
+    0 6px 10px 4px rgb(var(--shadow-rgb) / 0.15);
+  --elev-5:
+    0 4px 4px rgb(var(--shadow-rgb) / 0.3),
+    0 8px 12px 6px rgb(var(--shadow-rgb) / 0.15);
+}
+
+:root {
+  /* ------------------------------------------------ 形（M3 Expressive shape scale） */
+  --shape-xs: 4px;
+  --shape-sm: 8px;
+  --shape-md: 12px;
+  --shape-lg: 16px;
+  --shape-lg2: 20px; /* large-increased */
+  --shape-xl: 28px;
+  --shape-xl2: 32px; /* extra-large-increased */
+  --shape-xxl: 48px;
+  --shape-full: 999px;
+
+  /* ------------------------------------------------ 間隔（4px 基準） */
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 20px;
+  --s-6: 24px;
+  --s-8: 32px;
+  --s-10: 40px;
+
+  /* ------------------------------------------------ 字
+     M3 は Roboto（Pixel は Google Sans Flex）。同梱はしない — Android では
+     Roboto、iOS では SF に解決され、和文は端末の Noto Sans CJK / Hiragino に
+     落ちる。数字とコードだけ等幅を指名する（桁揃えは装飾ではなく機能）。
+     等幅を同梱したいときだけ @fontsource/ibm-plex-mono などを足す */
+  --font-ui: 'Google Sans Flex', 'Google Sans', Roboto, 'Roboto Flex', -apple-system,
+    BlinkMacSystemFont, system-ui, 'Segoe UI', 'Noto Sans JP', 'Noto Sans CJK JP', 'Hiragino Sans',
+    'Yu Gothic UI', Meiryo, sans-serif;
+  --font-num: 'IBM Plex Mono', 'Roboto Mono', ui-monospace, 'SFMono-Regular', Menlo, Consolas,
+    monospace;
+
+  /* M3 type scale（size / line-height）。emphasized は同じ寸法で太さを上げる
+     （Expressive の「強調」）。使う太さは 400 / 500 / 700 の3つだけ。
+     ★和文に負の字間を入れない★ 中黒・句読点が隣の字に食われて消える（実測） */
+  --t-display-l: 3.5625rem; /* 57 */
+  --lh-display-l: 4rem; /* 64 */
+  --t-display-m: 2.8125rem; /* 45 */
+  --lh-display-m: 3.25rem; /* 52 */
+  --t-display-s: 2.25rem; /* 36 */
+  --lh-display-s: 2.75rem; /* 44 */
+  --t-headline-l: 2rem; /* 32 */
+  --lh-headline-l: 2.5rem; /* 40 */
+  --t-headline-m: 1.75rem; /* 28 */
+  --lh-headline-m: 2.25rem; /* 36 */
+  --t-headline-s: 1.5rem; /* 24 */
+  --lh-headline-s: 2rem; /* 32 */
+  --t-title-l: 1.375rem; /* 22 */
+  --lh-title-l: 1.75rem; /* 28 */
+  --t-title-m: 1rem; /* 16 / 500 */
+  --lh-title-m: 1.5rem; /* 24 */
+  --t-title-s: 0.875rem; /* 14 / 500 */
+  --lh-title-s: 1.25rem; /* 20 */
+  --t-body-l: 1rem; /* 16 */
+  --lh-body-l: 1.5rem; /* 24 */
+  --t-body-m: 0.875rem; /* 14 */
+  --lh-body-m: 1.25rem; /* 20 */
+  --t-body-s: 0.75rem; /* 12 */
+  --lh-body-s: 1rem; /* 16 */
+  --t-label-l: 0.875rem; /* 14 / 500 */
+  --lh-label-l: 1.25rem; /* 20 */
+  --t-label-m: 0.75rem; /* 12 / 500 */
+  --lh-label-m: 1rem; /* 16 */
+  --t-label-s: 0.6875rem; /* 11 / 500 */
+  --lh-label-s: 1rem; /* 16 */
+
+  --w-regular: 400;
+  --w-medium: 500;
+  --w-emph: 700; /* emphasized */
+
+  /* ★16px を下回らせない★ 下回った瞬間、iOS が入力欄のフォーカスで
+     画面を拡大して戻さなくなる。値ではなく名前で契約を表現する専用トークン */
+  --t-input: 16px;
+
+  --lh-tight: 1.25;
+  --lh-snug: 1.45;
+  --lh-body: 1.6;
+
+  /* ------------------------------------------------ 動き（M3 Expressive motion scheme）
+     時間+曲線ではなく**バネ**で動かす。spatial は位置・大きさ・形（行き過ぎを
+     許す）、effects は色・不透明度（行き過ぎない、臨界減衰）。
+       spatial  fast 800/ζ0.6  default 380/ζ0.8  slow 200/ζ0.8
+       effects  fast 3800/ζ1   default 1600/ζ1   slow 800/ζ1
+     ★lib/motion.ts の publishSprings() が起動時に本物のバネ曲線を linear()
+     として上書きする★ ここの cubic-bezier はその近似（初回描画用）。
+     JS を積まないなら、この近似のままでも十分見られる */
+  --ease-spatial-fast: cubic-bezier(0.3, 1.2, 0.4, 1);
+  --ease-spatial: cubic-bezier(0.25, 1.05, 0.35, 1);
+  --ease-spatial-slow: cubic-bezier(0.2, 1, 0.3, 1);
+  --ease-effects-fast: cubic-bezier(0.2, 0, 0, 1);
+  --ease-effects: cubic-bezier(0.2, 0, 0, 1);
+  --ease-effects-slow: cubic-bezier(0.2, 0, 0, 1);
+  --d-spatial-fast: 350ms;
+  --d-spatial: 500ms;
+  --d-spatial-slow: 650ms;
+  --d-effects-fast: 150ms;
+  --d-effects: 200ms;
+  --d-effects-slow: 300ms;
+
+  /* 押し込み。指より遅れたら負け。バネの計算対象ではなく固定値 */
+  --d-tap: 90ms;
+
+  /* ------------------------------------------------ 端末の安全域 */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+
+  /* ------------------------------------------------ 外殻の幾何
+     M3: top app bar 64 / navigation bar 80。ナビゲーションバーは
+     画面下端に貼り付く（浮かせない）。
+     ★上下の占有量は --inset-top / --inset-bottom の2本に集約する★
+     FAB・浮くバー・スナックバーの位置は必ずここから calc する。
+     各所で個別に calc すると、1箇所でも直し漏れたときにスナックバーが
+     バーの裏に隠れて「元に戻す」が押せなくなる（＝取り消し不能な削除） */
+  --nav-h: 64px;
+  --dock-h: 80px;
+  --inset-top: calc(var(--nav-h) + var(--safe-top));
+  --inset-bottom: calc(var(--dock-h) + var(--safe-bottom));
+
+  /* ------------------------------------------------ 重なり順
+     ★1箇所で決める★ 各ファイルで z-index を発明しない */
+  --z-bar: 20; /* トップアプリバー / ナビゲーションバー */
+  --z-float: 15; /* FAB・引いて更新の印（バーの下から出る） */
+  --z-toolbar: 21; /* 浮くツールバー（バーより上） */
+  --z-viewer: 60; /* 全画面ビューア */
+  --z-flight: 70; /* 共有要素で飛んでいる1枚 */
+  --z-scrim: 88;
+  --z-sheet: 89;
+  --z-snackbar: 95; /* 常に最前。何かを取り消せる唯一の場所だから */
+}
+
+/* ============================================================
+   視差効果を減らす設定への追従
+   「アニメーションを消す」のではなく「穏やかなものに差し替える」。
+   移動・拡大は各所で無効化し、残った変化は 150ms のフェードに寄せる。
+
+   ★注意★ lib/motion.ts の publishSprings() は documentElement.style
+   （インライン）に --d-* / --ease-* を書くので、このブロックに勝ってしまう。
+   spring() 自身が reduce を見て 150ms/ease-out に短絡している事実に
+   依存する設計。その短絡を消さないこと。
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    /* 0ms は瞬間移動で逆に不気味なので、押下だけは残す */
+    --d-tap: 100ms;
+    --d-spatial-fast: 150ms;
+    --d-spatial: 150ms;
+    --d-spatial-slow: 150ms;
+    --d-effects-fast: 150ms;
+    --d-effects: 150ms;
+    --d-effects-slow: 150ms;
+    --ease-spatial-fast: ease-out;
+    --ease-spatial: ease-out;
+    --ease-spatial-slow: ease-out;
+    --ease-effects-fast: ease-out;
+    --ease-effects: ease-out;
+    --ease-effects-slow: ease-out;
+  }
+}

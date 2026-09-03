@@ -1,0 +1,141 @@
+/* ============================================================
+   地ならし — reset と「Webページの顔」を消す設定
+
+   ここでやることは2つだけ。
+     1. ブラウザ既定の差を消す
+     2. 「これはWebページだ」と一発で割れる挙動を止める
+        （長押しメニュー・青い選択範囲・画像のドラッグゴースト・
+          タップ時の灰色の点滅・リンクの青と紫）
+   ============================================================ */
+
+@import './tokens.css';
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* ★% を先に書いて dvh で上書きする★ 未対応環境では dvh の宣言ごと捨てられて
+   % が残る。dvh にすると、ブラウザで URL バーが出入りしても
+   下端のナビゲーションバーが動かない */
+html,
+body,
+#root {
+  height: 100%;
+  height: 100dvh;
+}
+
+body {
+  margin: 0;
+  background: var(--surface);
+  color: var(--on-surface);
+  font-family: var(--font-ui);
+  font-size: var(--t-body-l);
+  line-height: var(--lh-body);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  /* ★合成ボールドを止める★ 和文は端末により Regular/Medium/Bold しか
+     持たない。無い太さを要求すると端末側が合成して潰れる。
+     使う太さは 400/500/700 の3つだけ */
+  font-synthesis-weight: none;
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  overscroll-behavior-y: none;
+}
+
+img {
+  -webkit-user-drag: none;
+}
+
+/* 文字として扱いたいものだけ選択を戻す。
+   ★要素セレクタも必ず併記すること★ クラス名だけで戻すと、端末によっては
+   input / textarea の中の選択やキャレット移動まで巻き添えで死ぬ。
+   長押しコピーの価値があるもの（本文・パス・型番・コード）は残す */
+input,
+textarea,
+.input,
+.textarea,
+.selectable,
+.mono,
+code,
+pre {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+  border: 0;
+  background: none;
+  padding: 0;
+}
+
+/* リンクの既定色を必ず打ち消す。`<a class="btn">` を使うと
+   ブラウザ既定の青／訪問済みの紫がボタンの中に出る */
+a,
+a:visited,
+a:hover,
+a:active {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* キーボード操作時だけ枠を出す（M3 focus indicator: 3px / secondary）。
+   マウス/タップでは出さない */
+:focus-visible {
+  outline: 3px solid var(--secondary);
+  outline-offset: 2px;
+  border-radius: var(--shape-sm);
+}
+
+/* 数字は等幅にする。桁が動く場所（金額・件数・時刻）で字が踊らない。
+   ★和文の palt（プロポーショナル詰め）は入れない★ 負の letter-spacing と
+   併用すると中黒・句読点の送り幅がほぼ 0 になり、隣の字に食われて消える。
+   実測: 「写真・動画」が「写真動画」に見えた。締まりは font-weight で作る */
+.mono,
+.num,
+.stat__hero,
+.stat__value,
+.row__value {
+  font-variant-numeric: tabular-nums;
+}
+
+.mono {
+  font-family: var(--font-num);
+}
+
+/* 読み上げ専用。目には出さないが DOM からは消さない */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* 視差効果を減らす設定。時間と曲線の差し替えは tokens.css 側でまとめて
+   やっている。ここでは「延々と動き続けるもの」だけを止める */
+@media (prefers-reduced-motion: reduce) {
+  .skel {
+    animation: none;
+    opacity: 0.7;
+  }
+
+  .btn__busy,
+  .loader--on {
+    animation: none;
+  }
+}

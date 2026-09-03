@@ -1,0 +1,748 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content"
+    />
+    <title>M3E Kit — 見本帳</title>
+
+    <!-- ★このデモはリポジトリのルートから配ること★
+         starter/ の CSS を相対パスでそのまま読んでいる。
+         書いてある値と目に見えるものが必ず一致するようにするため、
+         デモ用に色や寸法を書き直すことはしない。
+           npm run demo   →  http://localhost:8080/demo/ -->
+    <link rel="stylesheet" href="../starter/styles/components.css" />
+
+    <style>
+      /* ここにあるのは「見本帳のための組み方」だけ。
+         部品の見た目は 1 行も上書きしない */
+      .swatches {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: var(--s-2);
+      }
+      .sw {
+        border-radius: var(--shape-md);
+        padding: var(--s-3);
+        min-height: 64px;
+        font-size: var(--t-label-m);
+        font-weight: var(--w-medium);
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+      }
+      .sw code {
+        font-family: var(--font-num);
+        font-size: var(--t-label-s);
+        opacity: 0.75;
+      }
+      .shapes {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--s-3);
+      }
+      .shapes div {
+        width: 72px;
+        height: 72px;
+        display: grid;
+        place-items: center;
+        background: var(--secondary-container);
+        color: var(--on-secondary-container);
+        font-size: var(--t-label-s);
+        font-family: var(--font-num);
+      }
+      .elevs {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--s-4);
+        padding: var(--s-2);
+      }
+      .elevs div {
+        width: 72px;
+        height: 56px;
+        display: grid;
+        place-items: center;
+        border-radius: var(--shape-md);
+        background: var(--surface-mid);
+        font-size: var(--t-label-s);
+        font-family: var(--font-num);
+      }
+      .wrap {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--s-2);
+        align-items: center;
+      }
+      .stack {
+        display: flex;
+        flex-direction: column;
+        gap: var(--s-3);
+      }
+      .note {
+        font-size: var(--t-body-s);
+        line-height: var(--lh-body-s);
+        color: var(--on-surface-variant);
+      }
+      .seedrow {
+        display: flex;
+        gap: var(--s-2);
+        flex-wrap: wrap;
+      }
+      .seedbtn {
+        width: 40px;
+        height: 40px;
+        border-radius: var(--shape-full);
+        border: 2px solid transparent;
+        transition: border-radius var(--d-spatial-fast) var(--ease-spatial-fast);
+      }
+      .seedbtn[aria-pressed='true'] {
+        border-color: var(--on-surface);
+        border-radius: var(--shape-md);
+      }
+    </style>
+  </head>
+
+  <body>
+    <!-- アイコン。全部ストローク設計（docs/09-components.md §アイコン） -->
+    <svg style="display: none" aria-hidden="true">
+      <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></symbol>
+      <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
+      <symbol id="i-star" viewBox="0 0 24 24"><path d="m12 3 2.7 5.9 6.3.7-4.7 4.3 1.3 6.1L12 17l-5.6 3 1.3-6.1L3 9.6l6.3-.7z"/></symbol>
+      <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.8v2.4M12 18.8v2.4M4.5 12H2.1M21.9 12h-2.4M6.7 6.7 5 5M19 19l-1.7-1.7M6.7 17.3 5 19M19 5l-1.7 1.7"/></symbol>
+      <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+      <symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></symbol>
+      <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></symbol>
+      <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12.5 5 5L19 7"/></symbol>
+      <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></symbol>
+      <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5"/></symbol>
+    </svg>
+
+    <div class="app">
+      <!-- ================================================= トップアプリバー -->
+      <header class="appbar" id="appbar">
+        <div class="appbar__side">
+          <button class="iconbtn" aria-label="戻る">
+            <svg class="icon" style="transform: rotate(180deg)"><use href="#i-chevron" /></svg>
+          </button>
+        </div>
+        <h1 class="appbar__title">見本帳</h1>
+        <div class="appbar__side appbar__side--end">
+          <button class="iconbtn" id="themebtn" aria-label="明るさを切り替える">
+            <svg class="icon"><use href="#i-moon" /></svg>
+          </button>
+        </div>
+      </header>
+
+      <main class="main main--padded" id="main">
+        <!-- ================================================= 色 -->
+        <section class="section" id="s-color">
+          <h2 class="label">色 — シードを選ぶと全部が変わる</h2>
+          <div class="seedrow" id="seeds"></div>
+          <p class="note">
+            配色は <code class="mono">scripts/gen-m3-scheme.mjs</code> がシード1色から HCT
+            で算出したもの。手で hex を書かない。
+          </p>
+          <div class="swatches">
+            <div class="sw" style="background: var(--primary); color: var(--on-primary)">primary<code>--primary</code></div>
+            <div class="sw" style="background: var(--primary-container); color: var(--on-primary-container)">primary-container<code>FAB・読み込みの器</code></div>
+            <div class="sw" style="background: var(--secondary-container); color: var(--on-secondary-container)">secondary-container<code>選択中・tonal</code></div>
+            <div class="sw" style="background: var(--tertiary-container); color: var(--on-tertiary-container)">tertiary-container<code>2系列目</code></div>
+            <div class="sw" style="background: var(--error-container); color: var(--on-error-container)">error-container<code>破壊的・超過</code></div>
+            <div class="sw" style="background: var(--surface); color: var(--on-surface); box-shadow: inset 0 0 0 1px var(--outline-variant)">surface<code>画面の地</code></div>
+            <div class="sw" style="background: var(--surface-mid); color: var(--on-surface)">surface-mid<code>カード・行・バー</code></div>
+            <div class="sw" style="background: var(--surface-high); color: var(--on-surface)">surface-high<code>通知・ダイアログ</code></div>
+            <div class="sw" style="background: var(--surface-highest); color: var(--on-surface)">surface-highest<code>入力欄・トラック</code></div>
+            <div class="sw" style="background: var(--inverse-surface); color: var(--inverse-on-surface)">inverse-surface<code>スナックバー</code></div>
+          </div>
+        </section>
+
+        <!-- ================================================= 字 -->
+        <section class="section" id="s-type">
+          <h2 class="label">字 — M3 type scale</h2>
+          <div class="panel">
+            <div class="panel__body">
+              <div style="font-size: var(--t-display-m); line-height: var(--lh-display-m); font-weight: var(--w-medium)">display-m 45</div>
+              <div style="font-size: var(--t-headline-s); line-height: var(--lh-headline-s); font-weight: var(--w-medium)">headline-s 24</div>
+              <div style="font-size: var(--t-title-l); line-height: var(--lh-title-l); font-weight: var(--w-medium)">title-l 22 — 画面の表題</div>
+              <div style="font-size: var(--t-title-s); line-height: var(--lh-title-s); font-weight: var(--w-medium); color: var(--on-surface-variant)">title-s 14 — セクション見出し</div>
+              <div style="font-size: var(--t-body-l); line-height: var(--lh-body-l)">body-l 16 — 行の主文と本文。和文に負の字間を入れない</div>
+              <div style="font-size: var(--t-body-m); line-height: var(--lh-body-m); color: var(--on-surface-variant)">body-m 14 — 補助文</div>
+              <div style="font-size: var(--t-label-l); line-height: var(--lh-label-l); font-weight: var(--w-medium)">label-l 14/500 — ボタン・チップ</div>
+              <div class="mono">1,234,567 — 数字は等幅・tabular-nums</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================================================= 形・高さ -->
+        <section class="section" id="s-shape">
+          <h2 class="label">形 — shape scale</h2>
+          <div class="shapes">
+            <div style="border-radius: var(--shape-xs)">4</div>
+            <div style="border-radius: var(--shape-sm)">8</div>
+            <div style="border-radius: var(--shape-md)">12</div>
+            <div style="border-radius: var(--shape-lg)">16</div>
+            <div style="border-radius: var(--shape-lg2)">20</div>
+            <div style="border-radius: var(--shape-xl)">28</div>
+            <div style="border-radius: var(--shape-full)">full</div>
+          </div>
+          <h2 class="label">高さ — elevation。浮いているものにだけ影</h2>
+          <div class="elevs">
+            <div style="box-shadow: var(--elev-1)">1</div>
+            <div style="box-shadow: var(--elev-2)">2</div>
+            <div style="box-shadow: var(--elev-3)">3</div>
+            <div style="box-shadow: var(--elev-5)">5</div>
+          </div>
+        </section>
+
+        <!-- ================================================= ボタン -->
+        <section class="section" id="s-btn">
+          <h2 class="label">ボタン — 押すと形が変わる（押しっぱなしにしてみる）</h2>
+          <div class="wrap">
+            <button class="btn btn--filled">filled</button>
+            <button class="btn">tonal（既定）</button>
+            <button class="btn btn--outlined">outlined</button>
+            <button class="btn btn--text">text</button>
+            <button class="btn btn--elevated">elevated</button>
+            <button class="btn btn--danger">削除</button>
+            <button class="btn" disabled>使えない</button>
+          </div>
+          <div class="wrap">
+            <button class="btn btn--sm">XS 32</button>
+            <button class="btn">既定 48</button>
+            <button class="btn btn--filled">
+              <svg class="icon icon--sm"><use href="#i-check" /></svg>保存
+            </button>
+            <button class="btn btn--filled" id="busybtn">送信<span class="btn__busy"></span></button>
+          </div>
+          <button class="btn btn--filled btn--full">M サイズ 56 — 画面の主要操作</button>
+          <h2 class="label">アイコンボタン・FAB</h2>
+          <div class="wrap">
+            <button class="iconbtn"><svg class="icon"><use href="#i-search" /></svg></button>
+            <button class="iconbtn iconbtn--tonal"><svg class="icon"><use href="#i-star" /></svg></button>
+            <button class="iconbtn iconbtn--filled"><svg class="icon"><use href="#i-plus" /></svg></button>
+            <button class="fab fab--sm" style="position: static"><svg class="icon"><use href="#i-plus" /></svg></button>
+            <button class="fab" style="position: static"><svg class="icon"><use href="#i-plus" /></svg></button>
+            <button class="fab fab--ext" style="position: static">
+              <svg class="icon"><use href="#i-plus" /></svg>追加する
+            </button>
+          </div>
+        </section>
+
+        <!-- ================================================= 選択 -->
+        <section class="section" id="s-select">
+          <h2 class="label">接続ボタン群 — 排他選択。ピルが滑る</h2>
+          <div class="seg" style="--seg-n: 3" id="seg1">
+            <div class="seg__ind"></div>
+            <button class="seg__btn" aria-pressed="true">すべて</button>
+            <button class="seg__btn" aria-pressed="false">写真</button>
+            <button class="seg__btn" aria-pressed="false">動画</button>
+          </div>
+
+          <h2 class="label">タブ — 「並列の場所」の切り替え</h2>
+          <div class="tabs" style="--tab-n: 3" id="tabs1">
+            <button class="tabs__item" aria-selected="true">今月</button>
+            <button class="tabs__item" aria-selected="false">先月</button>
+            <button class="tabs__item" aria-selected="false">年間</button>
+            <div class="tabs__ind"></div>
+          </div>
+        </section>
+
+        <section class="section">
+          <h2 class="label">チップ — 絞り込み</h2>
+        </section>
+        <div class="chips">
+          <button class="chip" aria-pressed="true">食費</button>
+          <button class="chip" aria-pressed="false">日用品</button>
+          <button class="chip" aria-pressed="false">交通</button>
+          <span class="chips__sep"></span>
+          <button class="chip" aria-pressed="false">
+            <svg class="icon"><use href="#i-star" /></svg>お気に入り
+          </button>
+          <button class="chip" disabled>使えない</button>
+        </div>
+
+        <!-- ================================================= 入力 -->
+        <section class="section" id="s-input">
+          <h2 class="label">入力</h2>
+          <div class="search">
+            <svg class="icon"><use href="#i-search" /></svg>
+            <input class="search__input" placeholder="検索" />
+          </div>
+          <div class="field">
+            <label class="label" for="f1">filled text field</label>
+            <input class="input" id="f1" placeholder="名前" />
+          </div>
+          <div class="field">
+            <label class="label" for="f2">outlined</label>
+            <input class="input input--outlined" id="f2" placeholder="メモ" />
+          </div>
+          <div class="field">
+            <label class="label" for="f3">エラー</label>
+            <input class="input input--error" id="f3" value="ずんだもん" />
+            <p class="field__error">この名前は使われています</p>
+          </div>
+          <select class="select">
+            <option>選んでください</option>
+            <option>ひとつめ</option>
+          </select>
+          <textarea class="textarea" placeholder="長い文"></textarea>
+          <input class="input input--num" value="12,340" />
+
+          <h2 class="label">スイッチ・チェック・ラジオ・スライダー</h2>
+          <div class="row">
+            <div class="row__main"><span class="row__title">通知を受け取る</span></div>
+            <input type="checkbox" class="switch" checked />
+          </div>
+          <label class="check"><input type="checkbox" class="checkbox" checked />既読を含める</label>
+          <label class="check"><input type="checkbox" class="checkbox" />下書きを含める</label>
+          <label class="check"><input type="radio" name="r" class="radio" checked />新しい順</label>
+          <label class="check"><input type="radio" name="r" class="radio" />古い順</label>
+          <input type="range" class="slider" id="sl" value="40" style="--p: 40%" />
+        </section>
+
+        <!-- ================================================= 面と行 -->
+        <section class="section" id="s-list">
+          <h2 class="label">面と行</h2>
+          <div class="panel">
+            <div class="rowlist">
+              <button class="row row--link">
+                <div class="row__main">
+                  <span class="row__title">1行の行は 56px</span>
+                </div>
+                <span class="row__value">1,200</span>
+                <svg class="row__chevron"><use href="#i-chevron" /></svg>
+              </button>
+              <button class="row row--link">
+                <div class="row__main">
+                  <span class="row__title">2行の行は 72px</span>
+                  <span class="row__sub">副題は body-m / on-surface-variant</span>
+                </div>
+                <svg class="row__chevron"><use href="#i-chevron" /></svg>
+              </button>
+              <div class="row row--on">
+                <div class="row__main"><span class="row__title">選択中は secondary-container</span></div>
+                <svg class="icon icon--sm"><use href="#i-check" /></svg>
+              </div>
+              <button class="row row--link row--danger">
+                <svg class="icon"><use href="#i-trash" /></svg>
+                <div class="row__main"><span class="row__title">履歴を消す</span></div>
+              </button>
+            </div>
+          </div>
+
+          <div class="panel panel--outlined">
+            <div class="panel__body">
+              <strong>outlined card</strong>
+              <span class="muted">地を持てない場所、または並べて区別したいときだけ</span>
+            </div>
+          </div>
+
+          <h2 class="label">左スワイプで削除（しきい値を超えると予告が変わる）</h2>
+          <div class="panel">
+            <div class="swiperow" id="swipe">
+              <div class="swiperow__bg">離すと削除</div>
+              <div class="swiperow__content">
+                <div class="row">
+                  <div class="row__main"><span class="row__title">指で左へ引いてみる</span></div>
+                  <span class="row__value">2,480</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================================================= 知らせ -->
+        <section class="section" id="s-feedback">
+          <h2 class="label">知らせ</h2>
+          <div class="wrap">
+            <span class="badge">既定</span>
+            <span class="badge badge--on">有効</span>
+            <span class="badge badge--off">停止中</span>
+            <span class="badge badge--alert">超過</span>
+          </div>
+          <div class="notice">
+            <strong>通知カード</strong>
+            <span class="muted">地から一段上の面（surface-container-high）に置く</span>
+          </div>
+          <div class="notice notice--alert">
+            <strong>保存できませんでした</strong>
+            <span class="muted">通信が切れています。つながってからもう一度試してください</span>
+            <button class="btn btn--sm">もう一度試す</button>
+          </div>
+          <div class="empty">
+            <span class="empty__title">まだ何もありません</span>
+            <span>最初のひとつを追加すると、ここに並びます</span>
+            <button class="btn btn--filled">追加する</button>
+          </div>
+          <h2 class="label">骨（読み込み中）</h2>
+          <div class="panel">
+            <div class="panel__body skel-group">
+              <div class="skel" style="width: 60%; height: 14px"></div>
+              <div class="skel" style="width: 90%; height: 14px"></div>
+              <div class="skel" style="width: 40%; height: 14px"></div>
+            </div>
+          </div>
+          <div class="wrap">
+            <button class="btn" id="toastbtn">スナックバーを出す</button>
+            <button class="btn" id="sheetbtn">ボトムシートを開く</button>
+            <button class="btn btn--danger" id="dialogbtn">確認ダイアログ</button>
+            <button class="btn" id="toolbarbtn">浮くツールバー</button>
+          </div>
+        </section>
+
+        <!-- ================================================= 進み具合 -->
+        <section class="section" id="s-progress">
+          <h2 class="label">進み具合</h2>
+          <div class="meter">
+            <div class="meter__head">
+              <span>今月の予算</span>
+              <span class="mono">62%</span>
+            </div>
+            <div class="meter__track"><div class="meter__fill" style="width: 62%"></div></div>
+          </div>
+          <div class="meter">
+            <div class="meter__head">
+              <span>先月の予算</span>
+              <span class="mono">118%</span>
+            </div>
+            <div class="meter__track"><div class="meter__fill meter__fill--over" style="width: 100%"></div></div>
+          </div>
+          <h2 class="label">読み込みの印 — 形が変わりながら回る</h2>
+          <div class="wrap">
+            <div class="loader-chip">
+              <svg class="loader loader--on" viewBox="0 0 100 100">
+                <path class="loader__shape" id="ld1"></path>
+              </svg>
+            </div>
+            <svg class="loader loader--on" viewBox="0 0 100 100" style="color: var(--primary)">
+              <path class="loader__shape" id="ld2"></path>
+            </svg>
+            <span class="note">7つの多角形の間を <code class="mono">d</code> で補間している</span>
+          </div>
+        </section>
+
+        <div style="height: 40px"></div>
+      </main>
+
+      <!-- ================================================= FAB -->
+      <button class="fab" aria-label="追加">
+        <svg class="icon"><use href="#i-plus" /></svg>
+      </button>
+
+      <!-- ================================================= ナビゲーションバー -->
+      <nav class="navbar" style="--nav-n: 4" id="nav">
+        <div class="navbar__ind"></div>
+        <button class="navbar__item" aria-current="page">
+          <svg class="icon"><use href="#i-home" /></svg>ホーム
+        </button>
+        <button class="navbar__item">
+          <svg class="icon"><use href="#i-search" /></svg>さがす
+        </button>
+        <button class="navbar__item">
+          <svg class="icon"><use href="#i-star" /></svg>お気に入り
+        </button>
+        <button class="navbar__item">
+          <svg class="icon"><use href="#i-gear" /></svg>設定
+        </button>
+      </nav>
+    </div>
+
+    <div class="toasts" id="toasts"></div>
+
+    <script type="module">
+      /* ============================================================
+         見本帳を動かすだけの JS。部品の作法そのものは CSS 側にある。
+         ここでやること:
+           1. 押下（.is-pressed）… lib/press.ts と同じことを素の JS で
+           2. 明暗とシードの切替 … lib/theme.ts と同じ
+           3. 各インジケータの位置（--seg-i / --tab-i / --nav-i）
+           4. 読み込みの印の形 … lib/loader.ts の移植
+         ============================================================ */
+
+      /* ---------------------------------------------------------- 1. 押下 */
+      const PRESSABLE =
+        '.btn, .iconbtn, .fab, .chip, .row--link, .seg__btn, .navbar__item, .toast__action, .switch, .seedbtn'
+      let pressed = null
+      const release = () => {
+        pressed?.classList.remove('is-pressed')
+        pressed = null
+      }
+      document.addEventListener(
+        'pointerdown',
+        (e) => {
+          const t = e.target.closest?.(PRESSABLE)
+          if (!t || t.disabled) return
+          release()
+          pressed = t
+          t.classList.add('is-pressed')
+        },
+        { passive: true },
+      )
+      for (const type of ['pointerup', 'pointercancel', 'pointerleave', 'scroll'])
+        document.addEventListener(type, release, { passive: true, capture: true })
+
+      /* ---------------------------------------------------------- 2. 明暗とシード */
+      const SEEDS = [
+        ['indigo', 'インディゴ', '#575b8c'],
+        ['teal', 'ティール', '#206a5f'],
+        ['green', 'グリーン', '#496738'],
+        ['amber', 'アンバー', '#88522d'],
+        ['rose', 'ローズ', '#894d5b'],
+        ['violet', 'バイオレット', '#6f33d5'],
+        ['graphite', 'グラファイト', '#575f6b'],
+      ]
+      const root = document.documentElement
+      const seedbox = document.getElementById('seeds')
+      let seed = 'indigo'
+      const paintSeeds = () => {
+        for (const b of seedbox.children) b.setAttribute('aria-pressed', String(b.dataset.id === seed))
+      }
+      for (const [id, label, sw] of SEEDS) {
+        const b = document.createElement('button')
+        b.className = 'seedbtn'
+        b.dataset.id = id
+        b.style.background = sw
+        b.title = label
+        b.setAttribute('aria-label', label)
+        b.onclick = () => {
+          seed = id
+          if (id === 'indigo') root.removeAttribute('data-seed')
+          else root.setAttribute('data-seed', id)
+          paintSeeds()
+        }
+        seedbox.appendChild(b)
+      }
+      paintSeeds()
+
+      let theme = 'system'
+      document.getElementById('themebtn').onclick = () => {
+        theme = theme === 'system' ? 'dark' : theme === 'dark' ? 'light' : 'system'
+        if (theme === 'system') root.removeAttribute('data-theme')
+        else root.setAttribute('data-theme', theme)
+        toast(`明るさ: ${theme}`)
+      }
+
+      /* トップアプリバーは「潜ったら surface-container」。しきい値をまたいだときだけ塗る */
+      const main = document.getElementById('main')
+      const appbar = document.getElementById('appbar')
+      let solid = false
+      main.addEventListener(
+        'scroll',
+        () => {
+          const next = main.scrollTop > 4
+          if (next !== solid) {
+            solid = next
+            appbar.classList.toggle('appbar--solid', solid)
+          }
+        },
+        { passive: true },
+      )
+
+      /* ---------------------------------------------------------- 3. インジケータ */
+      function exclusive(root, itemSel, indexVar, attr) {
+        const items = [...root.querySelectorAll(itemSel)]
+        items.forEach((el, i) => {
+          el.onclick = () => {
+            root.style.setProperty(indexVar, i)
+            items.forEach((o, j) => o.setAttribute(attr, attr === 'aria-current' ? (i === j ? 'page' : 'false') : String(i === j)))
+          }
+        })
+      }
+      exclusive(document.getElementById('seg1'), '.seg__btn', '--seg-i', 'aria-pressed')
+      exclusive(document.getElementById('tabs1'), '.tabs__item', '--tab-i', 'aria-selected')
+      exclusive(document.getElementById('nav'), '.navbar__item', '--nav-i', 'aria-current')
+
+      for (const chip of document.querySelectorAll('.chip[aria-pressed]'))
+        chip.onclick = () => chip.setAttribute('aria-pressed', chip.getAttribute('aria-pressed') !== 'true')
+
+      const sl = document.getElementById('sl')
+      sl.oninput = () => sl.style.setProperty('--p', sl.value + '%')
+
+      /* ---------------------------------------------------------- 4. 読み込みの印
+         lib/loader.ts の移植。極座標 r(θ) を 48 本の 3 次ベジェにして、
+         同じコマンド列の d どうしを WAAPI で補間する */
+      const N = 48
+      const R = 33
+      const ell = (a, b, t) => {
+        const c = b * Math.cos(t)
+        const s = a * Math.sin(t)
+        return (a * b) / Math.sqrt(c * c + s * s)
+      }
+      const SHAPES = [
+        (t) => 1 + 0.16 * Math.cos(10 * t),
+        (t) => 1 + 0.09 * Math.cos(9 * t),
+        (t) => 1 + 0.1 * Math.cos(5 * t),
+        (t) => ell(1.22, 0.7, t),
+        (t) => 1 + 0.18 * Math.cos(8 * t),
+        (t) => 1 + 0.14 * Math.cos(4 * t),
+        (t) => ell(1.1, 0.86, t - Math.PI / 4),
+      ]
+      function toPath(r) {
+        const pts = []
+        for (let i = 0; i < N; i++) {
+          const t = (i / N) * Math.PI * 2
+          const rr = R * r(t)
+          pts.push([50 + rr * Math.cos(t), 50 + rr * Math.sin(t)])
+        }
+        const at = (i) => pts[((i % N) + N) % N]
+        const f = (v) => v.toFixed(2)
+        let d = `M${f(pts[0][0])} ${f(pts[0][1])}`
+        for (let i = 0; i < N; i++) {
+          const [p0, p1, p2, p3] = [at(i - 1), at(i), at(i + 1), at(i + 2)]
+          d += `C${f(p1[0] + (p2[0] - p0[0]) / 6)} ${f(p1[1] + (p2[1] - p0[1]) / 6)} ${f(p2[0] - (p3[0] - p1[0]) / 6)} ${f(p2[1] - (p3[1] - p1[1]) / 6)} ${f(p2[0])} ${f(p2[1])}`
+        }
+        return d + 'Z'
+      }
+      const paths = SHAPES.map(toPath)
+      for (const id of ['ld1', 'ld2']) {
+        const p = document.getElementById(id)
+        p.setAttribute('d', paths[0])
+        try {
+          p.animate(
+            [...paths, paths[0]].map((d, i) => ({
+              d: `path("${d}")`,
+              offset: i / paths.length,
+              easing: 'cubic-bezier(0.4, 0, 0.2, 1)',
+            })),
+            { duration: 650 * paths.length, iterations: Infinity },
+          )
+        } catch {
+          /* d の補間ができない環境では最初の形のまま回る */
+        }
+      }
+
+      /* ---------------------------------------------------------- スナックバー */
+      const toasts = document.getElementById('toasts')
+      function toast(text, action) {
+        const el = document.createElement('div')
+        el.className = 'toast'
+        el.innerHTML = `<span class="toast__text"></span>`
+        el.querySelector('.toast__text').textContent = text
+        if (action) {
+          const b = document.createElement('button')
+          b.className = 'toast__action'
+          b.textContent = action
+          b.onclick = () => el.remove()
+          el.appendChild(b)
+        }
+        toasts.appendChild(el)
+        el.animate([{ transform: 'translateY(-12px)', opacity: 0 }, {}], {
+          duration: 300,
+          easing: 'cubic-bezier(0.2, 0, 0, 1)',
+        })
+        setTimeout(() => el.remove(), 4000)
+      }
+      document.getElementById('toastbtn').onclick = () => toast('1件を削除しました', '元に戻す')
+
+      /* ---------------------------------------------------------- シート / ダイアログ */
+      function overlay(build) {
+        const scrim = document.createElement('div')
+        scrim.className = 'scrim'
+        const el = build()
+        const close = () => {
+          scrim.remove()
+          el.remove()
+        }
+        scrim.onclick = close
+        document.body.append(scrim, el)
+        return close
+      }
+
+      document.getElementById('sheetbtn').onclick = () => {
+        const close = overlay(() => {
+          const el = document.createElement('div')
+          el.className = 'sheet'
+          el.innerHTML = `
+            <div class="sheet__grab">
+              <div class="sheet__handle"></div>
+              <h2 class="sheet__title">並べ替え</h2>
+            </div>
+            <div class="sheet__body">
+              <label class="check"><input type="radio" name="s" class="radio" checked />新しい順</label>
+              <label class="check"><input type="radio" name="s" class="radio" />古い順</label>
+              <label class="check"><input type="radio" name="s" class="radio" />名前順</label>
+              <button class="btn btn--filled btn--full">決定</button>
+            </div>`
+          el.querySelector('.btn').onclick = () => close()
+          el.animate([{ transform: 'translateY(100%)' }, {}], {
+            duration: 500,
+            easing: 'cubic-bezier(0.25, 1.05, 0.35, 1)',
+          })
+          return el
+        })
+      }
+
+      document.getElementById('dialogbtn').onclick = () => {
+        const close = overlay(() => {
+          const el = document.createElement('div')
+          el.className = 'dialog'
+          el.innerHTML = `
+            <h2 class="dialog__title">4件を完全に削除しますか</h2>
+            <p class="muted">この操作は元に戻せません。ゴミ箱にも残りません。</p>
+            <div class="dialog__acts">
+              <button class="btn btn--text" data-x>やめる</button>
+              <button class="btn btn--danger" data-x>削除する</button>
+            </div>`
+          for (const b of el.querySelectorAll('[data-x]')) b.onclick = () => close()
+          el.animate([{ opacity: 0, transform: 'translate(-50%, -50%) scale(0.92)' }, {}], {
+            duration: 350,
+            easing: 'cubic-bezier(0.3, 1.2, 0.4, 1)',
+          })
+          return el
+        })
+      }
+
+      document.getElementById('toolbarbtn').onclick = () => {
+        const old = document.querySelector('.toolbar')
+        if (old) return old.remove()
+        const el = document.createElement('div')
+        el.className = 'toolbar'
+        el.innerHTML = `
+          <span class="mono">3件</span>
+          <div style="flex:1"></div>
+          <button class="iconbtn"><svg class="icon"><use href="#i-star"/></svg></button>
+          <button class="iconbtn"><svg class="icon"><use href="#i-trash"/></svg></button>
+          <button class="btn btn--sm" data-x>やめる</button>`
+        el.querySelector('[data-x]').onclick = () => el.remove()
+        document.body.appendChild(el)
+        el.animate([{ transform: 'translateY(24px)', opacity: 0 }, {}], {
+          duration: 500,
+          easing: 'cubic-bezier(0.25, 1.05, 0.35, 1)',
+        })
+      }
+
+      /* ---------------------------------------------------------- 左スワイプで削除
+         指の移動量に 1:1 で追従し、しきい値で予告を変える（docs/12-gestures.md） */
+      const swipe = document.getElementById('swipe')
+      const content = swipe.querySelector('.swiperow__content')
+      let x0 = null
+      swipe.addEventListener('pointerdown', (e) => {
+        x0 = e.clientX
+        content.style.willChange = 'transform'
+      })
+      swipe.addEventListener('pointermove', (e) => {
+        if (x0 === null) return
+        const dx = Math.min(0, e.clientX - x0)
+        content.style.transform = `translateX(${dx}px)`
+        swipe.classList.toggle('swiperow--armed', -dx > swipe.offsetWidth * 0.4)
+      })
+      const endSwipe = () => {
+        if (x0 === null) return
+        x0 = null
+        content.style.willChange = ''
+        const armed = swipe.classList.contains('swiperow--armed')
+        content.animate([{}, { transform: 'translateX(0)' }], {
+          duration: 500,
+          easing: 'cubic-bezier(0.25, 1.05, 0.35, 1)',
+        }).onfinish = () => (content.style.transform = '')
+        content.style.transform = ''
+        swipe.classList.remove('swiperow--armed')
+        if (armed) toast('1件を削除しました', '元に戻す')
+      }
+      swipe.addEventListener('pointerup', endSwipe)
+      swipe.addEventListener('pointercancel', endSwipe)
+    </script>
+  </body>
+</html>

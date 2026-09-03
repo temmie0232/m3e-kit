@@ -1,0 +1,17 @@
+{
+  "name": "m3e-kit",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Material 3 Expressive を Web に起こすための説明書とコピー元一式",
+  "scripts": {
+    "//": "starter/ の配色を作り直す。シードを増やす・変えるときに回す",
+    "gen:scheme": "esbuild starter/scripts/gen-m3-scheme.mjs --bundle --platform=node --format=esm --outfile=node_modules/.cache/gen-m3-scheme.mjs --log-level=error && M3E_OUT=starter node node_modules/.cache/gen-m3-scheme.mjs",
+    "//demo": "デモを開く。依存なしの静的 HTML なので何で配ってもよい",
+    "demo": "python3 -m http.server 8080 --directory demo"
+  },
+  "devDependencies": {
+    "@material/material-color-utilities": "^0.4.0",
+    "esbuild": "^0.25.0"
+  }
+}
