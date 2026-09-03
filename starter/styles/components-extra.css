@@ -152,7 +152,7 @@
   min-width: 0;
 }
 
-/* 1件の予定。左に色の帯（種類）、右に時刻 */
+/* 1件の予定。左に種類の点、右に時刻 */
 .agenda__item {
   display: flex;
   align-items: center;
@@ -163,8 +163,19 @@
   background: var(--surface-mid);
   text-align: left;
   width: 100%;
-  /* 種類の色は --accent で渡す。既定は primary */
-  box-shadow: inset 3px 0 0 var(--accent, var(--primary));
+}
+
+/* 種類の色は「点」で示す。★左端に帯を敷かない★ 帯は行の輪郭に
+   沿った線がもう1本増えるだけで、角丸と喧嘩して装飾に見える。
+   点なら札と同じ行に乗るので、色は種類の印としてだけ働く。
+   色は --accent で渡す。既定は primary */
+.agenda__item::before {
+  content: '';
+  flex: 0 0 auto;
+  width: 8px;
+  height: 8px;
+  border-radius: var(--shape-full);
+  background: var(--accent, var(--primary));
 }
 
 .agenda__item .row__main {
@@ -249,10 +260,22 @@
   border-radius: var(--shape-xs);
   background: var(--secondary-container);
   color: var(--on-secondary-container);
-  box-shadow: inset 2px 0 0 var(--accent, var(--primary));
   font-size: var(--t-label-s);
   line-height: 1.3;
   text-align: left;
+}
+
+/* 種類の点。.agenda__item と同じ作法（帯にしない）。
+   枠が小さいので 6px、札とは 4px だけ空ける */
+.week__ev::before {
+  content: '';
+  display: inline-block;
+  vertical-align: 1px;
+  width: 6px;
+  height: 6px;
+  margin-right: var(--s-1);
+  border-radius: var(--shape-full);
+  background: var(--accent, var(--primary));
 }
 
 /* いまの時刻の線 */
