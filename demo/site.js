@@ -448,7 +448,7 @@ function renderIndex() {
         .map(
           (e) =>
             `<button class="index__item" data-id="${e.id}" aria-current="${e.id === state.id}">` +
-            `<span>${e.name}</span><span class="index__m3">${esc(e.m3)}</span></button>`,
+            `<span>${esc(e.name)}</span><span class="index__m3">${esc(e.m3)}</span></button>`,
         )
         .join('')
     )
@@ -469,9 +469,9 @@ function renderDetail() {
 
   detail.innerHTML = `
     <div class="detail__head">
-      <h1 class="detail__title">${e.name}</h1>
+      <h1 class="detail__title">${esc(e.name)}</h1>
       <div class="detail__meta">
-        <span class="badge">${e.group}</span>
+        <span class="badge">${esc(e.group)}</span>
         <span>${esc(e.m3)}</span>
         <span>·</span>
         <span>components-${e.file}.css</span>
@@ -479,7 +479,7 @@ function renderDetail() {
         <a class="btn btn--text btn--sm" href="../docs/${e.doc}.md">docs/${e.doc}.md</a>
       </div>
     </div>
-    <p class="detail__note">${e.note}</p>
+    <p class="detail__note">${esc(e.note)}</p>
 
     <div class="bar">
       <div class="seg" id="wseg" style="--seg-n:4; --seg-i:${
@@ -499,7 +499,7 @@ function renderDetail() {
     ${
       e.contracts?.length
         ? `<div class="section"><h2 class="label">守ること</h2>
-             <ul class="contracts">${e.contracts.map((c) => `<li>${c}</li>`).join('')}</ul></div>`
+             <ul class="contracts">${e.contracts.map((c) => `<li>${esc(c)}</li>`).join('')}</ul></div>`
         : ''
     }
 
