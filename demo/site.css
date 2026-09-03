@@ -69,7 +69,7 @@ body {
 }
 
 .index__search {
-  padding: var(--s-3);
+  padding: var(--s-2);
 }
 
 .index__list {
@@ -138,10 +138,13 @@ body {
 .detail {
   min-height: 0;
   overflow-y: auto;
-  padding: var(--s-6);
+  /* ★図鑑自身の余白★ 部品の寸法は M3 の規定どおりで触らない。
+     プレビューが画面の下へ追いやられていたのは、ここの padding と gap が
+     PC の道具にしては大きかったせい（実測: 上から 286px でようやく始まる） */
+  padding: var(--s-4);
   display: flex;
   flex-direction: column;
-  gap: var(--s-5);
+  gap: var(--s-3);
   background: var(--surface-dim);
 }
 
