@@ -65,6 +65,15 @@ img {
   scrollbar-width: thin;
 }
 
+/* ★細いつまみを出すのは PC だけ★ .scroller と同じ作法。
+   触る画面で指では掴めない幅のつまみを見せると、掴もうとして失敗する
+   （docs/15-adaptive.md「PC で足すもの」＝細いスクロールバー） */
+@media (pointer: coarse) {
+  * {
+    scrollbar-width: auto;
+  }
+}
+
 /* ★見出し・段落・一覧の既定 margin を落とす★
    このキットは「兄弟の間隔は gap で作る。個別 margin を書かない」という
    規約（docs/05-space.md）で組んであるのに、UA スタイルシートの <p> は
