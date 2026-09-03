@@ -608,7 +608,8 @@ body.no-bars {
 .textarea,
 .select {
   width: 100%;
-  min-height: 56px;
+  /* 56（触る画面）／48（マウス）。48 を下回らせない → tokens.css の --density */
+  min-height: calc(56px - var(--density));
   padding: var(--s-3) var(--s-4);
   background-color: var(--surface-highest);
   border: 0;
@@ -780,7 +781,8 @@ body.no-bars {
   display: flex;
   align-items: center;
   gap: var(--s-3);
-  min-height: 56px;
+  /* 56（触る画面）／48（マウス）→ tokens.css の --density */
+  min-height: calc(56px - var(--density));
   padding: 0 var(--s-4);
   border-radius: var(--shape-xl);
   background: var(--surface-highest);
@@ -1288,7 +1290,8 @@ body.no-bars {
   align-items: center;
   gap: var(--s-4);
   padding: var(--s-3) var(--s-4);
-  min-height: 56px;
+  /* 56（触る画面）／48（マウス）→ tokens.css の --density */
+  min-height: calc(56px - var(--density));
   text-align: left;
   width: 100%;
   transition: background-color var(--d-tap) var(--ease-effects);
@@ -1857,6 +1860,9 @@ body.no-bars {
   display: flex;
   align-items: center;
   gap: var(--s-2);
+  /* ★--density を掛けない★ 中身が 48 のアイコンボタン + 上下 8 の余白で
+     ちょうど 64 になるので、min-height を削っても高さは 1px も変わらない。
+     縮めるにはアイコンボタンを 48 未満にするしかなく、それは禁止（実測で確認） */
   min-height: 64px;
   padding: var(--s-2) var(--s-2) var(--s-2) var(--s-4);
   border-radius: var(--shape-full);
