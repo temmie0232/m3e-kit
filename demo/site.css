@@ -1,0 +1,282 @@
+/* ============================================================
+   図鑑そのものの見た目。★部品の CSS は1行も上書きしない★
+   ここに書いてよいのは「図鑑の枠組み」だけ。部品の色・寸法・角丸を
+   足したくなったら、それは starter/ 側が足りていないという合図。
+
+   図鑑自身も starter/ のトークンで組んである（自分の道具で自分を作る）。
+   ============================================================ */
+
+body {
+  overflow: hidden;
+}
+
+.site {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  height: 100dvh;
+}
+
+/* ---------------------------------------------------------- 上の帯 */
+.top {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  padding: var(--s-2) var(--s-3);
+  background: var(--surface);
+  box-shadow: inset 0 -1px 0 var(--outline-variant);
+  min-height: 64px;
+}
+
+.top__brand {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-2);
+  font-size: var(--t-title-m);
+  font-weight: var(--w-medium);
+  white-space: nowrap;
+}
+
+.top__brand small {
+  font-family: var(--font-num);
+  font-size: var(--t-label-s);
+  color: var(--on-surface-variant);
+  font-weight: var(--w-regular);
+}
+
+.top__spacer {
+  flex: 1;
+}
+
+/* 索引を開く（狭い画面用） */
+.top__menu {
+  display: none;
+}
+
+/* ---------------------------------------------------------- 本体 */
+.body {
+  display: grid;
+  grid-template-columns: 288px minmax(0, 1fr);
+  min-height: 0;
+}
+
+/* ---------------------------------------------------------- 左の索引 */
+.index {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--surface);
+  box-shadow: inset -1px 0 0 var(--outline-variant);
+}
+
+.index__search {
+  padding: var(--s-3);
+}
+
+.index__list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0 var(--s-2) var(--s-6);
+}
+
+.index__group {
+  padding: var(--s-4) var(--s-3) var(--s-1);
+  font-size: var(--t-title-s);
+  line-height: var(--lh-title-s);
+  font-weight: var(--w-medium);
+  color: var(--on-surface-variant);
+  position: sticky;
+  top: 0;
+  background: var(--surface);
+  z-index: 1;
+}
+
+.index__item {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  width: 100%;
+  min-height: 40px;
+  padding: 0 var(--s-3);
+  border-radius: var(--shape-full);
+  text-align: left;
+  font-size: var(--t-body-m);
+  color: var(--on-surface-variant);
+  transition: background-color var(--d-effects) var(--ease-effects);
+}
+
+.index__item:hover {
+  background: var(--hover-on-surface);
+}
+
+.index__item[aria-current='true'] {
+  background: var(--secondary-container);
+  color: var(--on-secondary-container);
+  font-weight: var(--w-medium);
+}
+
+.index__m3 {
+  margin-left: auto;
+  font-family: var(--font-num);
+  font-size: var(--t-label-s);
+  color: var(--outline);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 40%;
+}
+
+.index__empty {
+  padding: var(--s-6) var(--s-3);
+  color: var(--on-surface-variant);
+  font-size: var(--t-body-m);
+  text-align: center;
+}
+
+/* ---------------------------------------------------------- 右の本文 */
+.detail {
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--s-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-5);
+  background: var(--surface-dim);
+}
+
+.detail__head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+}
+
+.detail__title {
+  margin: 0;
+  font-size: var(--t-headline-s);
+  line-height: var(--lh-headline-s);
+  font-weight: var(--w-medium);
+}
+
+.detail__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+  align-items: center;
+  font-family: var(--font-num);
+  font-size: var(--t-label-s);
+  color: var(--on-surface-variant);
+}
+
+.detail__note {
+  font-size: var(--t-body-l);
+  line-height: var(--lh-body);
+  max-width: 68ch;
+}
+
+/* 幅の切り替え + コード表示の帯 */
+.bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+/* プレビューの枠。中身は iframe（部品の position: fixed を正しく効かせるため） */
+.stage {
+  border-radius: var(--shape-lg);
+  background: var(--surface);
+  box-shadow: inset 0 0 0 1px var(--outline-variant);
+  padding: var(--s-3);
+  display: flex;
+  justify-content: center;
+  overflow-x: auto;
+}
+
+.stage iframe {
+  border: 0;
+  border-radius: var(--shape-md);
+  background: var(--surface);
+  box-shadow: 0 0 0 1px var(--outline-variant);
+  display: block;
+  flex: 0 0 auto;
+}
+
+/* 約束事（★） */
+.contracts {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.contracts li {
+  display: flex;
+  gap: var(--s-2);
+  font-size: var(--t-body-m);
+  line-height: var(--lh-body-m);
+  color: var(--on-surface-variant);
+}
+
+.contracts li::before {
+  content: '★';
+  color: var(--primary);
+  flex: 0 0 auto;
+}
+
+/* コード */
+.src {
+  position: relative;
+  margin: 0;
+  max-height: 60dvh;
+}
+
+.src__copy {
+  position: absolute;
+  top: var(--s-2);
+  right: var(--s-2);
+}
+
+/* 一覧（グループを通しで見るとき） */
+.all {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-6);
+}
+
+.all__item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+
+/* ---------------------------------------------------------- 狭い画面 */
+@media (max-width: 899px) {
+  .body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .index {
+    position: fixed;
+    inset: 64px auto 0 0;
+    z-index: 30;
+    width: min(320px, 86vw);
+    box-shadow: var(--elev-3);
+    transform: translateX(-100%);
+    transition: transform var(--d-spatial) var(--ease-spatial);
+  }
+
+  .index.is-open {
+    transform: none;
+  }
+
+  .top__menu {
+    display: inline-grid;
+  }
+
+  .detail {
+    padding: var(--s-4);
+  }
+}

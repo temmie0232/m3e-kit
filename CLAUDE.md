@@ -15,5 +15,6 @@
 
 - `starter/styles/m3-scheme.css` と `starter/lib/seeds.ts` は**生成物**。
   手で編集しない（`npm run gen:scheme`）
-- 部品を足したら **`docs/09-components.md` と `demo/index.html` の両方**に足す
+- 部品を足したら **`docs/09-components.md` と `demo/catalog.js` の両方**に足す
+  （図鑑の html は1箇所だけ書く。プレビューとコード欄の両方に使われる）
 - 説明書に書く数値は、`starter/` の実体と必ず一致させる

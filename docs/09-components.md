@@ -1,7 +1,7 @@
 # 09. 部品カタログ
 
 実体は `starter/styles/components*.css`。ここには**使い方と契約**だけを書く。
-実物は `demo/index.html`（見本帳）で見る。
+**実物は部品図鑑（`demo/`）で見る** — 全部品が実際に動き、HTML をコピーできる。
 
 - ここに無い部品を作るときは → [10-new-component](10-new-component.md)
 - shadcn/ui の名前から引きたいときは → [19-shadcn-map](19-shadcn-map.md)
@@ -11,7 +11,7 @@ JS が要るところだけ「**JS**」と注記してある。
 
 ---
 
-## 一覧（69 部品）
+## 一覧（70 部品）
 
 | 分類 | 部品 | クラス | ファイル |
 |---|---|---|---|
@@ -20,6 +20,7 @@ JS が要るところだけ「**JS**」と注記してある。
 | | ナビゲーションバー（下端） | `.navbar` | core |
 | | ナビゲーションレール（左端） | `.rail` | nav |
 | | ナビゲーションドロワー | `.drawer` | nav |
+| | 適応レイアウト | `.app--adaptive` | nav |
 | | ボトムアプリバー | `.bottombar` | nav |
 | | 浮くツールバー | `.toolbar` | core |
 | | パンくず | `.crumbs` | nav |
