@@ -1,0 +1,721 @@
+/* ============================================================
+   入力の応用
+   コンボボックス・日付/時刻・OTP・トグル・分割ボタン・FABメニュー・
+   ドロップ領域・評価・色見本
+   ============================================================ */
+
+/* ============================================================
+   1. 入力の体系（.field の拡張）
+   ラベル → 入力 → 説明 → エラー の順。**この順から動かさない**
+   （読み上げが「ラベル・値・説明・エラー」の順で読む）
+   ============================================================ */
+
+/* 入力の下に置く説明。エラーが出たら消す（2行になると入力が押し下がる） */
+.field__help {
+  font-size: var(--t-body-s);
+  line-height: var(--lh-body-s);
+  color: var(--on-surface-variant);
+}
+
+/* 入力の中に置く前置き・後置き（¥ / 円 / kg / @） */
+.field__wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.field__affix {
+  position: absolute;
+  color: var(--on-surface-variant);
+  font-size: var(--t-body-l);
+  pointer-events: none;
+}
+
+.field__affix--start {
+  left: var(--s-4);
+}
+
+.field__affix--end {
+  right: var(--s-4);
+}
+
+.field__wrap--start .input {
+  padding-left: var(--s-8);
+}
+
+.field__wrap--end .input {
+  padding-right: var(--s-8);
+}
+
+/* 文字数。★増えるほど右に伸びる書き方をしない★ 桁が動くと入力が跳ねる */
+.field__count {
+  align-self: flex-end;
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--t-body-s);
+  color: var(--on-surface-variant);
+}
+
+.field__count--over {
+  color: var(--error);
+}
+
+/* 横に並ぶ入力（姓/名、開始/終了）。★狭い画面では縦に落とす★ */
+.field-row {
+  display: grid;
+  grid-template-columns: repeat(var(--field-n, 2), minmax(0, 1fr));
+  gap: var(--s-3);
+}
+
+@media (max-width: 419px) {
+  .field-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* ============================================================
+   2. コンボボックス（入力しながら絞る選択）
+   ★<select> で足りるなら <select> を使う★ 選択肢が 10 個を超えて、
+   探すのに文字を打ちたくなるときだけこちらにする
+   ============================================================ */
+.combo {
+  position: relative;
+}
+
+/* 候補は .menu をそのまま使う。幅だけ入力に合わせる */
+.combo__list {
+  width: var(--combo-w, 100%);
+  min-width: 0;
+}
+
+/* 打った文字に一致した部分。★色ではなく太さで示す★
+   一覧の中で色が散らばると読めなくなる */
+.combo__hit {
+  font-weight: var(--w-emph);
+  color: var(--on-surface);
+}
+
+/* 選んだものを札で残す（複数選択）。tag input */
+.combo__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+}
+
+/* ✕ 付きのチップ（M3 input chip）
+   ★position: relative + z-index★ .chip::after（当たり判定を広げる箱）は
+   絶対配置なので、そのままだと ✕ の上に乗って押せなくなる */
+.chip__x {
+  position: relative;
+  z-index: 1;
+  display: inline-grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  margin-right: -6px;
+  border-radius: var(--shape-full);
+  color: inherit;
+  opacity: 0.7;
+}
+
+.chip__x:hover {
+  opacity: 1;
+}
+
+/* ============================================================
+   3. カレンダー（M3 date picker / docked）
+   ★導出の手順は docs/10-new-component.md にある★
+   幅 328、日セルは 40 の円。
+   ============================================================ */
+.cal {
+  width: 328px;
+  max-width: 100%;
+  padding: var(--s-2);
+  border-radius: var(--shape-lg);
+  background: var(--surface-high);
+  color: var(--on-surface);
+}
+
+/* シート・ダイアログの中に置くときは地を持たせない */
+.sheet .cal,
+.dialog .cal,
+.popover .cal {
+  background: transparent;
+  padding: 0;
+}
+
+.cal__head {
+  display: flex;
+  align-items: center;
+  gap: var(--s-1);
+  min-height: 48px;
+  padding: 0 var(--s-1);
+}
+
+/* 「2026年9月」。押すと年の一覧に切り替わる */
+.cal__month {
+  flex: 1;
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-1);
+  min-height: 40px;
+  padding: 0 var(--s-3);
+  border-radius: var(--shape-full);
+  font-size: var(--t-label-l);
+  font-weight: var(--w-medium);
+  white-space: nowrap;
+}
+
+.cal__grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 2px;
+}
+
+.cal__dow {
+  height: 32px;
+  display: grid;
+  place-items: center;
+  font-size: var(--t-label-m);
+  line-height: var(--lh-label-m);
+  font-weight: var(--w-medium);
+  color: var(--on-surface-variant);
+}
+
+.cal__day {
+  position: relative;
+  min-height: 40px;
+  border-radius: var(--shape-full);
+  color: var(--on-surface);
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--t-label-l);
+  font-weight: var(--w-medium);
+  --day-layer: transparent;
+  box-shadow: inset 0 0 0 999px var(--day-layer);
+  transition:
+    border-radius var(--d-spatial-fast) var(--ease-spatial-fast),
+    background-color var(--d-effects) var(--ease-effects),
+    color var(--d-effects) var(--ease-effects),
+    box-shadow var(--d-tap) var(--ease-effects);
+}
+
+/* 見た目 40 → 当たり判定 48 */
+.cal__day::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+}
+
+.cal__day:active,
+.cal__day.is-pressed {
+  border-radius: var(--shape-md);
+  --day-layer: var(--pressed-on-surface);
+}
+
+/* 今日 = 枠だけ（M3）。選択中と見分けが付くように塗らない */
+.cal__day--today {
+  box-shadow:
+    inset 0 0 0 1px var(--primary),
+    inset 0 0 0 999px var(--day-layer);
+  color: var(--primary);
+}
+
+/* 選択中 = primary の塗り（M3） */
+.cal__day[aria-selected='true'] {
+  background: var(--primary);
+  color: var(--on-primary);
+  box-shadow: inset 0 0 0 999px var(--day-layer);
+}
+
+/* 期間の途中。★角丸を落として帯にする★ 丸のままだと日が飛び飛びに見える */
+.cal__day--in {
+  background: var(--secondary-container);
+  color: var(--on-secondary-container);
+  border-radius: 0;
+}
+
+.cal__day--start {
+  border-radius: var(--shape-full) 0 0 var(--shape-full);
+}
+
+.cal__day--end {
+  border-radius: 0 var(--shape-full) var(--shape-full) 0;
+}
+
+/* 前後の月の日。★opacity で薄くしない★ 押せることは変わらないので、
+   文字色だけを弱くする */
+.cal__day--other {
+  color: var(--outline);
+}
+
+.cal__day:disabled {
+  color: rgb(var(--on-surface-rgb) / 0.38);
+  cursor: not-allowed;
+}
+
+/* 予定がある日の点 */
+.cal__dot {
+  position: absolute;
+  left: 50%;
+  bottom: 4px;
+  width: 4px;
+  height: 4px;
+  margin-left: -2px;
+  border-radius: var(--shape-full);
+  background: currentColor;
+}
+
+/* ============================================================
+   4. 時刻（M3 time picker）
+   ============================================================ */
+
+/* 入力で打つ版。大きな数字2つ + AM/PM */
+.timefields {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-2);
+}
+
+.timefields__n {
+  width: 96px;
+  height: 80px;
+  text-align: center;
+  border: 0;
+  border-radius: var(--shape-sm);
+  background: var(--surface-highest);
+  color: var(--on-surface);
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--t-display-s);
+  line-height: var(--lh-display-s);
+}
+
+.timefields__n:focus {
+  outline: none;
+  background: var(--primary-container);
+  color: var(--on-primary-container);
+  box-shadow: inset 0 0 0 2px var(--primary);
+}
+
+.timefields__sep {
+  font-size: var(--t-display-s);
+  color: var(--on-surface);
+}
+
+/* ダイヤルで選ぶ版。★角度は --deg（deg 付き）を JS が書く★ */
+.dial {
+  position: relative;
+  width: 256px;
+  height: 256px;
+  max-width: 100%;
+  aspect-ratio: 1;
+  border-radius: var(--shape-full);
+  background: var(--surface-highest);
+  /* 数字を指で選ぶ。ブラウザのスクロールに取られない */
+  touch-action: none;
+  user-select: none;
+}
+
+/* 中心から伸びる針 */
+.dial__hand {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 2px;
+  height: 96px;
+  background: var(--primary);
+  transform-origin: 50% 100%;
+  transform: translate(-50%, -100%) rotate(var(--deg, 0deg));
+  transition: transform var(--d-spatial-fast) var(--ease-spatial-fast);
+  pointer-events: none;
+}
+
+/* 針の先のつまみ（48 = タップ判定と同じ大きさ） */
+.dial__hand::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: 48px;
+  height: 48px;
+  margin: -24px 0 0 -24px;
+  border-radius: var(--shape-full);
+  background: var(--primary);
+}
+
+/* 中心の点 */
+.dial::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 8px;
+  height: 8px;
+  margin: -4px 0 0 -4px;
+  border-radius: var(--shape-full);
+  background: var(--primary);
+}
+
+/* 数字。位置は JS が --x / --y（%）で置く */
+.dial__n {
+  position: absolute;
+  left: var(--x, 50%);
+  top: var(--y, 50%);
+  transform: translate(-50%, -50%);
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--shape-full);
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--t-body-l);
+  color: var(--on-surface);
+}
+
+.dial__n[aria-selected='true'] {
+  color: var(--on-primary);
+}
+
+/* ============================================================
+   5. 使い捨てコード（OTP）
+   ★1マス1文字の <input> を並べない★ 貼り付け・自動入力・
+   読み上げが全部おかしくなる。1つの <input> の上にマスを描き、
+   文字だけを透明にして重ねる（下の .otp__ghost）
+   ============================================================ */
+.otp {
+  position: relative;
+  display: flex;
+  gap: var(--s-2);
+  justify-content: center;
+}
+
+/* 実体。透明にして全マスの上に敷く */
+.otp__ghost {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: transparent;
+  caret-color: transparent;
+  /* ★16px を下回らせない★ */
+  font-size: var(--t-input);
+  letter-spacing: 0;
+  z-index: 1;
+}
+
+.otp__ghost:focus {
+  outline: none;
+}
+
+.otp__box {
+  width: 48px;
+  height: 56px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--shape-xs) var(--shape-xs) 0 0;
+  background: var(--surface-highest);
+  box-shadow: inset 0 -1px 0 var(--on-surface-variant);
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--t-headline-s);
+  color: var(--on-surface);
+  transition: box-shadow var(--d-effects) var(--ease-effects);
+}
+
+/* いま入る場所。キャレットの代わりに下線を太くする */
+.otp__box--now {
+  box-shadow: inset 0 -2px 0 var(--primary);
+}
+
+.otp--error .otp__box {
+  box-shadow: inset 0 -2px 0 var(--error);
+}
+
+/* ============================================================
+   6. トグルボタン（M3 icon toggle button / button group）
+   「押しっぱなしにできるボタン」。選択中は塗る
+   ============================================================ */
+.togglebtn {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  flex: 0 0 auto;
+  border-radius: var(--shape-full);
+  background: transparent;
+  color: var(--on-surface-variant);
+  --tg-layer: transparent;
+  box-shadow: inset 0 0 0 999px var(--tg-layer);
+  transition:
+    border-radius var(--d-spatial-fast) var(--ease-spatial-fast),
+    background-color var(--d-effects) var(--ease-effects),
+    color var(--d-effects) var(--ease-effects),
+    box-shadow var(--d-tap) var(--ease-effects);
+}
+
+.togglebtn:active,
+.togglebtn.is-pressed {
+  border-radius: var(--shape-md);
+  --tg-layer: var(--pressed-on-surface);
+}
+
+.togglebtn[aria-pressed='true'] {
+  background: var(--primary);
+  color: var(--on-primary);
+}
+
+.togglebtn[aria-pressed='true']:active,
+.togglebtn[aria-pressed='true'].is-pressed {
+  --tg-layer: rgb(255 255 255 / 0.14);
+}
+
+/* 枠を持つ版（並べたときに範囲が分かる） */
+.togglebtn--outlined {
+  box-shadow:
+    inset 0 0 0 1px var(--outline),
+    inset 0 0 0 999px var(--tg-layer);
+}
+
+.togglebtn--outlined[aria-pressed='true'] {
+  box-shadow: inset 0 0 0 999px var(--tg-layer);
+}
+
+/* 複数選べる群れ（太字/斜体/下線 など）。
+   ★1つしか選べないなら .seg（接続ボタン群）を使う★ */
+.togglegroup {
+  display: inline-flex;
+  gap: var(--s-1);
+  padding: var(--s-1);
+  border-radius: var(--shape-full);
+  background: var(--surface-highest);
+}
+
+/* ============================================================
+   7. 分割ボタン（M3 Expressive split button）
+   主な操作 + 「ほかの選択肢」。★角が向き合う側だけ角ばる★
+   ============================================================ */
+.splitbtn {
+  display: inline-flex;
+  gap: 2px;
+}
+
+.splitbtn > .btn:first-child {
+  border-radius: var(--shape-full) var(--shape-sm) var(--shape-sm) var(--shape-full);
+}
+
+.splitbtn > .btn:last-child {
+  border-radius: var(--shape-sm) var(--shape-full) var(--shape-full) var(--shape-sm);
+  padding-inline: var(--s-3);
+}
+
+.splitbtn > .btn:first-child:active,
+.splitbtn > .btn:first-child.is-pressed {
+  border-radius: var(--shape-md) var(--shape-sm) var(--shape-sm) var(--shape-md);
+}
+
+.splitbtn > .btn:last-child:active,
+.splitbtn > .btn:last-child.is-pressed {
+  border-radius: var(--shape-sm) var(--shape-md) var(--shape-md) var(--shape-sm);
+}
+
+/* 開いている間は矢印を返す */
+.splitbtn > .btn[aria-expanded='true'] .icon {
+  transform: rotate(180deg);
+}
+
+.splitbtn .icon {
+  transition: transform var(--d-spatial-fast) var(--ease-spatial-fast);
+}
+
+/* ============================================================
+   8. FAB メニュー（M3 Expressive FAB menu）
+   FAB を押すと、上にラベル付きの行き先が並ぶ。
+   ★3〜5個まで★ それ以上ならボトムシートにする
+   ============================================================ */
+.fabmenu {
+  position: absolute;
+  right: var(--s-4);
+  bottom: calc(var(--inset-bottom) + var(--s-4));
+  z-index: var(--z-float);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--s-2);
+}
+
+.fabmenu__item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  min-height: 56px;
+  padding: 0 var(--s-4);
+  border-radius: var(--shape-lg);
+  background: var(--primary-container);
+  color: var(--on-primary-container);
+  font-size: var(--t-label-l);
+  font-weight: var(--w-medium);
+  white-space: nowrap;
+  --fm-layer: transparent;
+  box-shadow:
+    inset 0 0 0 999px var(--fm-layer),
+    var(--elev-2);
+  transition:
+    border-radius var(--d-spatial-fast) var(--ease-spatial-fast),
+    box-shadow var(--d-tap) var(--ease-effects);
+}
+
+.fabmenu__item:active,
+.fabmenu__item.is-pressed {
+  border-radius: var(--shape-xl);
+  --fm-layer: var(--pressed-on-surface);
+}
+
+/* 開いている間は FAB の印を ✕ に回す */
+.fabmenu > .fab[aria-expanded='true'] .icon {
+  transform: rotate(45deg);
+}
+
+.fabmenu > .fab {
+  position: static;
+}
+
+/* ============================================================
+   9. ドロップ領域
+   ★破線は M3 に無いが、ここだけ例外★ 「まだ何も入っていない枠」を
+   実線で描くと、置ける場所ではなく空のカードに見える
+   ============================================================ */
+.dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-2);
+  min-height: 160px;
+  padding: var(--s-6);
+  border: 1px dashed var(--outline);
+  border-radius: var(--shape-lg);
+  background: var(--surface-mid);
+  color: var(--on-surface-variant);
+  text-align: center;
+  font-size: var(--t-body-m);
+  transition:
+    background-color var(--d-effects) var(--ease-effects),
+    border-color var(--d-effects) var(--ease-effects);
+}
+
+/* 上に持ってきている間。色と枠の両方を変える */
+.dropzone.is-over {
+  border-color: var(--primary);
+  border-style: solid;
+  background: var(--secondary-container);
+  color: var(--on-secondary-container);
+}
+
+/* 入れたものの一覧 */
+.dropzone__files {
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+
+/* ============================================================
+   10. 評価（星）
+   ★入力にも表示にも同じ形を使う★ 表示のときは button を span にする
+   ============================================================ */
+.rating {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  color: var(--outline-variant);
+}
+
+.rating__star {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  color: inherit;
+  transition:
+    color var(--d-effects) var(--ease-effects),
+    transform var(--d-spatial-fast) var(--ease-spatial-fast);
+}
+
+/* ★横には広げない★ 星は隙間 2px で並ぶので、左右に広げると
+   隣の星の判定と重なって「押した星の1つ隣が点く」ことがある */
+.rating__star::after {
+  content: '';
+  position: absolute;
+  inset: -4px 0;
+}
+
+.rating__star .icon {
+  width: 24px;
+  height: 24px;
+  fill: currentColor;
+  stroke: none;
+}
+
+.rating__star--on {
+  color: var(--primary);
+}
+
+.rating__star.is-pressed {
+  transform: scale(1.15);
+}
+
+/* 表示だけの小さい版 */
+.rating--sm .rating__star {
+  width: 18px;
+  height: 18px;
+}
+
+.rating--sm .rating__star .icon {
+  width: 16px;
+  height: 16px;
+}
+
+.rating--sm .rating__star::after {
+  content: none;
+}
+
+/* ============================================================
+   11. 色見本（テーマのシードを選ばせる）
+   ★形で選択を示す★ 色そのものが中身なので、色で選択を示せない
+   ============================================================ */
+.swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+}
+
+.swatch {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--shape-full);
+  box-shadow: inset 0 0 0 2px transparent;
+  transition:
+    border-radius var(--d-spatial-fast) var(--ease-spatial-fast),
+    box-shadow var(--d-effects) var(--ease-effects);
+}
+
+.swatch::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+}
+
+.swatch[aria-pressed='true'] {
+  border-radius: var(--shape-md);
+  box-shadow:
+    0 0 0 2px var(--surface),
+    0 0 0 4px var(--on-surface);
+}

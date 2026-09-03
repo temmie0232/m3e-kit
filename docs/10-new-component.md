@@ -18,15 +18,19 @@
 | 作りたいもの | 実は |
 |---|---|
 | アコーディオン | `.row`（押せる行）+ 開閉する `.panel__body` |
-| ドロップダウンメニュー | `.sheet`（モバイル）または `.panel--elevated` の中の `.rowlist` |
-| ツールチップ | `.badge` を `--inverse-surface` で。または出さない（モバイルでは触れない） |
+| ドロップダウンメニュー | `.menu`（PC）/ `.sheet`（携帯） |
+| ツールチップ | `.tip`。触る画面には**出さない** |
 | ステッパー（数量の増減） | `.iconbtn` 2つ + `.mono` の数字 |
-| アバター | 円（`--shape-full`）の `--secondary-container` + 頭文字 |
+| アバター | `.avatar` |
 | トースト以外の通知 | `.notice` または `.banner` |
-| タグ入力 | `.chip` に ✕ の `.icon` を足したもの |
-| ページネーション | たいてい要らない（無限スクロール + 「引いて更新」） |
-| モーダル | `.sheet`（モバイル）/ `.dialog`（戻せない確認だけ） |
+| タグ入力 | `.chip` + `.chip__x` |
+| ページネーション | 一覧なら要らない（無限スクロール + 引いて更新）。表なら `.pager` |
+| モーダル | `.sheet`（携帯）/ `.dialog`（戻せない確認だけ） |
 | ラジオのグループ | `.check` の並び、または `.seg`（3つ以下・短い札のとき） |
+| サイドバー | `.drawer--standard` / `.rail`（→ [15-adaptive](15-adaptive.md)） |
+| データテーブル | `.table`（携帯では `.rowlist` に畳む） |
+| 空きスペースの読み込み中 | `.skel` |
+| 進捗のリング | `.ring`（`--p` を渡す） |
 
 **言い換えだったら、既存のクラスを組み合わせて終わり。** 新しい CSS を書かない。
 
@@ -138,51 +142,67 @@
 
 ## 例1: カレンダーの日セル
 
+> この導出の結果が `components-form.css` の `.cal__day`。
+> 実物はそちらを使う。ここは**答えの出し方**を見せるために残してある。
+
 | 問 | 答え |
 |---|---|
 | Q1 | 言い換えではない。新規 |
 | Q2 | 札（押せる小さいもの） |
-| Q3 | 通常は地を持たない（カードの中）。今日 = `--primary-container`、選択中 = `--secondary-container`、予定あり = 下に 4px の `--primary` の点 |
+| Q3 | 通常は地を持たない（器の中）。今日 = **枠だけ**（`--primary` の 1px）、選択中 = `--primary` の塗り、期間の途中 = `--secondary-container` |
 | Q4 | 40×40 → `--shape-full`（丸）。押下で `--shape-md` |
 | Q5 | label-l（14/500）。`--font-num` + `tabular-nums`（桁で踊らせない） |
-| Q6 | grid の `gap: var(--s-1)`。7列 `repeat(7, minmax(0, 1fr))` |
-| Q7 | 押下=形+状態レイヤー / 選択中=secondary-container + 太字 / 他の月の日=`opacity` ではなく `--outline` の文字色 |
-| Q8 | 選択の移動を `--d-spatial`。月送りは横スライドではなくフェード（並列の移動だから） |
+| Q6 | grid の `gap: 2px`。7列 `repeat(7, minmax(0, 1fr))` |
+| Q7 | 押下=形+状態レイヤー / 選択中=primary の塗り / 他の月の日=`opacity` ではなく `--outline` の文字色（押せることは変わらない） |
+| Q8 | 選択の色を `--d-effects`、押下の形を `--d-spatial-fast`。月送りは横スライドではなくフェード（並列の移動だから） |
 | Q9 | 見た目 40 → `::after` で `inset: -4px` にして 48。`aria-selected`、`aria-label="9月3日"` |
 
 ```css
-.day {
+.cal__day {
   position: relative;
   min-height: 40px;
   border-radius: var(--shape-full);
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
   font-size: var(--t-label-l);
   font-weight: var(--w-medium);
-  font-variant-numeric: tabular-nums;
   color: var(--on-surface);
   --day-layer: transparent;
   box-shadow: inset 0 0 0 999px var(--day-layer);
   transition:
     border-radius var(--d-spatial-fast) var(--ease-spatial-fast),
-    box-shadow var(--d-tap) var(--ease-effects),
-    background-color var(--d-effects) var(--ease-effects);
+    background-color var(--d-effects) var(--ease-effects),
+    color var(--d-effects) var(--ease-effects),
+    box-shadow var(--d-tap) var(--ease-effects);
 }
-.day::after { content: ''; position: absolute; inset: -4px; }
-.day:active, .day.is-pressed {
+/* 見た目 40 → 当たり判定 48 */
+.cal__day::after { content: ''; position: absolute; inset: -4px; }
+.cal__day:active, .cal__day.is-pressed {
   border-radius: var(--shape-md);
   --day-layer: var(--pressed-on-surface);
 }
-.day--today { background: var(--primary-container); color: var(--on-primary-container); }
-.day[aria-selected='true'] {
-  background: var(--secondary-container);
-  color: var(--on-secondary-container);
-  font-weight: var(--w-emph);
+/* 今日 = 枠だけ。選択中（塗り）と見分けが付くように塗らない */
+.cal__day--today {
+  box-shadow: inset 0 0 0 1px var(--primary), inset 0 0 0 999px var(--day-layer);
+  color: var(--primary);
 }
-.day--other { color: var(--outline); }
+.cal__day[aria-selected='true'] {
+  background: var(--primary);
+  color: var(--on-primary);
+  box-shadow: inset 0 0 0 999px var(--day-layer);
+}
+.cal__day--other { color: var(--outline); }
 ```
+
+**Q3 で迷ったところ:** 最初は「今日 = primary-container の塗り」と考えたが、
+それだと選択中（primary の塗り）と**同じ「塗られた丸」**になって区別できない。
+M3 の date picker も今日は枠だけ。**塗りは1画面に1つの意味しか持てない。**
 
 ---
 
 ## 例2: 横に流れるカルーセル（M3 Expressive carousel）
+
+> こちらも `components-data.css` の `.carousel` として入っている。
 
 | 問 | 答え |
 |---|---|

@@ -33,22 +33,28 @@ UI は Material 3 Expressive で作る。仕様書とコピー元一式が
 
 ```
 AGENTS.md          ★AI の入口★ 読む順・絶対規則・既定値
-docs/              説明書（14章）
+docs/              説明書（19章）
 starter/           そのままコピーして使う実体
   styles/
-    m3-scheme.css    生成物。--md-sys-color-*（7シード × ライト/ダーク）
-    tokens.css       短い別名 + 形・字・間隔・動き・外殻の幾何
-    base.css         reset と「Webページの顔」を消す設定
-    components.css   部品の実体（約 1,500 行）
+    m3-scheme.css      生成物。--md-sys-color-*（7シード × ライト/ダーク）
+    tokens.css         短い別名 + 形・字・間隔・動き・外殻の幾何・画面幅
+    base.css           reset と「Webページの顔」を消す設定
+    components.css     ★入口★ 下の5本を束ねるだけ
+    components-core    骨組み・バー・ボタン・入力・選択・面と行・知らせ
+    components-nav     レール・ドロワー・サイドシート・パンくず・ページ送り
+    components-overlay メニュー・ポップオーバー・ツールチップ・開閉・⌘K
+    components-form    コンボボックス・日付/時刻・OTP・トグル・分割ボタン
+    components-data    アバター・表・カルーセル・木・手順・年表・図・本文
   lib/
     motion.ts        M3 のバネを linear() に焼く / 速度追跡 / 中断可能な動き
     loader.ts        形が変わる読み込みの印
     press.ts         pointerdown で .is-pressed（押下の即時反応）
+    overlay.ts       メニュー・候補の位置決めと ↑↓ の操作
     theme.ts         明暗とシードの適用・保存
     seeds.ts         生成物。シードの一覧
   scripts/
     gen-m3-scheme.mjs  シード色から配色を算出して CSS に静的化する
-demo/index.html    見本帳。全部品を1枚に並べたもの（依存なし）
+demo/              見本帳。全部品を並べたもの（依存なし・単一ページ）
 ```
 
 ### 章
@@ -63,12 +69,17 @@ demo/index.html    見本帳。全部品を1枚に並べたもの（依存なし
 | [06 高さ](docs/06-elevation.md) | 面の5段、影を敷いてよい条件 |
 | [07 動き](docs/07-motion.md) | バネ、共有要素、読み込みの印、視差低減 |
 | [08 外殻](docs/08-layout.md) | バー、z-index、Safe Area |
-| [09 部品カタログ](docs/09-components.md) | 29 部品の HTML + 契約 |
+| [09 部品カタログ](docs/09-components.md) | **64 部品**の一覧表 + HTML + 契約 |
 | [10 新しい部品の作り方](docs/10-new-component.md) | **カタログに無いものを導出する9問** |
 | [11 状態](docs/11-states.md) | 読み込み中・空・エラー・楽観的更新 |
 | [12 ジェスチャー](docs/12-gestures.md) | 1:1 追従、ラバーバンド、ハプティクス |
 | [13 チェックリスト](docs/13-checklist.md) | 実装後の自己検証 |
 | [14 指示文の雛形](docs/14-prompts.md) | AI に渡す文面 |
+| [15 適応レイアウト](docs/15-adaptive.md) | 画面幅クラス、レール/ドロワーの切替、pane |
+| [16 重ねるもの](docs/16-overlays.md) | メニュー・ポップオーバー・ツールチップ・⌘K |
+| [17 入力の設計](docs/17-forms.md) | 並び・型・検証・保存・日付・OTP・ファイル |
+| [18 一覧・表・図](docs/18-data.md) | 表を携帯で使わない理由、系列色、仮想化 |
+| [19 shadcn 対応表](docs/19-shadcn-map.md) | shadcn/ui の名前から引く |
 
 ---
 
@@ -83,6 +94,17 @@ npm run demo    # → http://localhost:8080/demo/
 書き直していない。
 
 見本帳では、シードを7色から選べて、明暗も切り替えられる。
+下端のナビゲーションで5つの章（基礎 / 部品 / 入力 / 一覧 / 重なり）を行き来する。
+**ウィンドウを 600px / 840px より広げると、下端のバーがレール → ドロワーに変わる**
+（適応レイアウトの確認）。
+
+## shadcn/ui から来た人へ
+
+部品の対応表がある → [docs/19-shadcn-map.md](docs/19-shadcn-map.md)
+
+考え方の違いは3つ。**CSS クラスだけを配る**（React コンポーネントではない）、
+**携帯優先**（PC は `.app--adaptive` で足す）、
+**開閉はブラウザに任せる**（Popover API と `<details>`）。
 
 ---
 

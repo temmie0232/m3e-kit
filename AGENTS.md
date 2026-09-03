@@ -31,7 +31,7 @@ starter/scripts/  →  <project>/scripts/
 エントリで CSS を1本読み、起動時に2つ呼ぶだけ:
 
 ```ts
-import './styles/components.css'   // base.css → tokens.css → m3-scheme.css まで芋づるで入る
+import './styles/components.css'   // ここ1本で全部入る（下の芋づるを参照）
 import { initTheme } from './lib/theme'
 import { watchPress } from './lib/press'
 import { watchMotionPrefs } from './lib/motion'
@@ -41,9 +41,27 @@ watchPress()       // pointerdown で .is-pressed を付ける（押下の即時
 watchMotionPrefs() // 本物のバネ曲線を --ease-* / --d-* に焼く
 ```
 
+```
+components.css       入口。★import するのはこれだけ★
+├ base.css           reset ← tokens.css ← m3-scheme.css
+├ components-core    骨組み・バー・ボタン・入力・選択・面と行・知らせ・
+│                    進捗・シート・ダイアログ・浮くツールバー
+├ components-nav     レール・ドロワー・ボトムアプリバー・サイドシート・
+│                    パンくず・ページ送り・タブの追加種
+├ components-overlay メニュー・ポップオーバー・ツールチップ・開閉・
+│                    コマンドパレット・全画面の検索・ダイアログの追加種
+├ components-form    コンボボックス・日付/時刻・OTP・トグル・分割ボタン・
+│                    FABメニュー・ドロップ領域・評価・色見本
+└ components-data    アバター・表・カルーセル・木・手順・年表・環の進捗・
+                     図・本文（markdown）・コード
+```
+
 CSS だけでも成立する。`lib/` を入れないと失われるのは
-「押した瞬間の反応」「本物のバネ」「形が変わる読み込みの印」の3つで、
-配色・形・字・間隔は CSS だけで全部効く。
+「押した瞬間の反応」「本物のバネ」「形が変わる読み込みの印」
+「メニューの位置決め」の4つで、配色・形・字・間隔は CSS だけで全部効く。
+
+**PC・タブレットでも使うアプリ**なら `.app` に `.app--adaptive` を付ける。
+画面幅でナビゲーションが自動で切り替わる（→ [15-adaptive](docs/15-adaptive.md)）。
 
 配色を変えたいときは `starter/scripts/gen-m3-scheme.mjs` の `SEEDS` を直して
 `npm run gen:scheme`（詳細は `starter/README.md`）。**hex を手で書かない。**
@@ -85,12 +103,17 @@ React でもプレーンな HTML でも Vue でも同じ。`docs/09-components.m
 | [06-elevation](docs/06-elevation.md) | 面を重ねるとき。影を敷いてよい条件 |
 | [07-motion](docs/07-motion.md) | 動かすとき。バネ・共有要素・視差低減 |
 | [08-layout](docs/08-layout.md) | 画面の外殻を組むとき。バー・z-index・スクロール |
-| [09-components](docs/09-components.md) | **部品カタログ。** HTML + CSS の実装例 |
+| [09-components](docs/09-components.md) | **部品カタログ（64 部品）。** 一覧表 + HTML |
 | [10-new-component](docs/10-new-component.md) | **カタログに無いものを作るとき。必ず読む** |
 | [11-states](docs/11-states.md) | 読み込み中・空・エラー・楽観的更新 |
 | [12-gestures](docs/12-gestures.md) | 指で触るものを作るとき。ハプティクス |
 | [13-checklist](docs/13-checklist.md) | 書き終わったとき |
 | [14-prompts](docs/14-prompts.md) | 人間があなたに渡す指示文の雛形 |
+| [15-adaptive](docs/15-adaptive.md) | **PC・タブレットにも出すとき。** 画面幅とナビゲーション |
+| [16-overlays](docs/16-overlays.md) | メニュー・ポップオーバー・ツールチップ・開閉 |
+| [17-forms](docs/17-forms.md) | 入力の組み方・検証・保存・日付・OTP |
+| [18-data](docs/18-data.md) | 一覧・表・図。表を携帯で使わない理由 |
+| [19-shadcn-map](docs/19-shadcn-map.md) | shadcn/ui の名前から引く対応表 |
 
 ---
 
@@ -108,6 +131,11 @@ React でもプレーンな HTML でも Vue でも同じ。`docs/09-components.m
 | 一覧の読み込み | 骨（`.skel`）。スピナーは出さない |
 | 画面の余白 | 話題の切れ目 24 / 同じ話題の中 16。**1画面で2種類まで** |
 | 一覧 → 詳細 | 同じ画面内で開けるならボトムシート。階層が変わるなら画面遷移 |
+| 「その他の操作」 | 携帯はボトムシート、PC はメニュー（`.menu`）。**携帯でメニューを出さない** |
+| 一覧の見せ方 | 携帯は `.rowlist`、expanded 幅から `.table`。**携帯で表を使わない** |
+| 一覧の追加読み込み | 無限スクロール + 引いて更新。ページ送りは表と検索結果だけ |
+| 開閉するもの | `<details>` + `.accordion`。div と JS で作り直さない |
+| メニュー・ポップオーバーの出し入れ | `popover` 属性（Popover API）。自前の外側クリック検出を書かない |
 
 ---
 

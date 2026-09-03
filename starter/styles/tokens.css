@@ -90,6 +90,19 @@
   --inverse-primary: var(--md-sys-color-inverse-primary);
   --surface-tint: var(--md-sys-color-surface-tint);
 
+  /* 図の系列色。M3 は「categorical palette」を定義していないので、
+     生成された配色の中で**互いに色相が離れている**役割を順に割り当てる。
+     ★4系列を超えたら色で分けるのを諦める★ 直接ラベルを置くか、
+     小さな図を並べる（small multiples）に切り替える */
+  --series-1: var(--primary);
+  --series-2: var(--tertiary);
+  --series-3: var(--secondary);
+  --series-4: var(--primary-fixed-dim);
+  --series-5: var(--tertiary-fixed-dim);
+  /* 図の地・グリッド・軸 */
+  --grid: var(--outline-variant);
+  --axis: var(--on-surface-variant);
+
   /* rgb 三つ組（透過を作るときだけ使う） */
   --primary-rgb: var(--md-sys-color-primary-rgb);
   --on-surface-rgb: var(--md-sys-color-on-surface-rgb);
@@ -253,6 +266,27 @@
   --inset-top: calc(var(--nav-h) + var(--safe-top));
   --inset-bottom: calc(var(--dock-h) + var(--safe-bottom));
 
+  /* 左端の占有量。ナビゲーションレール（80）/ 常設ドロワー（360）が
+     出ている間だけ 0 でなくなる。components-nav.css が上書きする。
+     ★横方向も1本に集約する★ 理由は --inset-bottom と同じ */
+  --inset-start: 0px;
+  --rail-w: 80px;
+  --drawer-w: 360px;
+
+  /* ------------------------------------------------ 画面幅クラス（M3 window size class）
+     ★CSS の @media は var() を読めない★ ので、ここに書くのは「値の台帳」。
+     メディアクエリには実数を書く（下の一覧と必ず一致させる）:
+       compact      〜599    携帯。ナビゲーションバー（下端）
+       medium       600〜839 折りたたみ・縦タブレット。ナビゲーションレール
+       expanded     840〜1199 横タブレット・小さいPC。常設ドロワー
+       large        1200〜1599
+       extra-large  1600〜
+     → docs/15-adaptive.md */
+  --bp-medium: 600px;
+  --bp-expanded: 840px;
+  --bp-large: 1200px;
+  --bp-xlarge: 1600px;
+
   /* ------------------------------------------------ 重なり順
      ★1箇所で決める★ 各ファイルで z-index を発明しない */
   --z-bar: 20; /* トップアプリバー / ナビゲーションバー */
@@ -261,8 +295,10 @@
   --z-viewer: 60; /* 全画面ビューア */
   --z-flight: 70; /* 共有要素で飛んでいる1枚 */
   --z-scrim: 88;
-  --z-sheet: 89;
-  --z-snackbar: 95; /* 常に最前。何かを取り消せる唯一の場所だから */
+  --z-sheet: 89; /* ボトムシート・サイドシート・ドロワー（モーダル）・ダイアログ */
+  --z-menu: 90; /* メニュー・ポップオーバー・コンボボックスの候補。シートの中からも開く */
+  --z-snackbar: 95; /* 何かを取り消せる唯一の場所。メニューより上 */
+  --z-tooltip: 96; /* 最前。何にも隠されてはいけない */
 }
 
 /* ============================================================

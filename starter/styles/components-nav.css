@@ -1,0 +1,542 @@
+/* ============================================================
+   ナビゲーション — 適応レイアウト（M3 window size class）
+
+   同じアプリでも、画面幅で「行き先の見せ方」が変わる。
+     compact  〜599     ナビゲーションバー（下端）  ← components-core.css
+     medium   600〜839  ナビゲーションレール（左端 80）
+     expanded 840〜     常設ドロワー（左端 360）
+
+   ★3つとも DOM に置いて、CSS で1つだけ見せる★ JS で幅を測って
+   出し分けると、リサイズのたびに再マウントされて状態が飛ぶ。
+   項目の一覧は同じデータから3回描く（React なら map を3回）。
+
+   ★左端の占有量は --inset-start 1本に集約する★ 中身の padding は
+   必ずここから calc する。→ docs/15-adaptive.md
+   ============================================================ */
+
+/* ============================================================
+   1. 画面幅クラスごとの出し分け
+   ★ここのブレークポイントは tokens.css の --bp-* と一致させる★
+   （@media は var() を読めないので実数を書くしかない）
+   ============================================================ */
+.rail,
+.drawer--standard {
+  display: none;
+}
+
+/* ★占有量は :root に書く★ .app に書くと、body 直下の portal
+   （スナックバー・Popover API で出したもの）に値が届かない。
+   :has() で「適応レイアウトのアプリが載っているページ」だけに当てる */
+@media (min-width: 600px) {
+  /* medium: レールに切り替える。下端のバーは消す */
+  :root:has(.app--adaptive) {
+    --inset-start: var(--rail-w);
+    --inset-bottom: var(--safe-bottom);
+  }
+  .app--adaptive .navbar {
+    display: none;
+  }
+  .app--adaptive .rail {
+    display: flex;
+  }
+}
+
+@media (min-width: 840px) {
+  /* expanded: 常設ドロワーに切り替える */
+  :root:has(.app--adaptive) {
+    --inset-start: var(--drawer-w);
+  }
+  .app--adaptive .rail {
+    display: none;
+  }
+  .app--adaptive .drawer--standard {
+    display: flex;
+  }
+  /* 板の上限を外す（.app の 720px は携帯向けの値） */
+  .app--adaptive {
+    max-width: none;
+    border-inline: 0;
+  }
+}
+
+/* 中身と上下のバーは components-core.css 側で --inset-start を
+   足し込んである（.main / .main--padded / .appbar / .toolbar /
+   .banner / .ptr / .toasts）。ここで個別に上書きしない */
+
+/* ============================================================
+   2. ナビゲーションレール（M3 navigation rail / 幅 80）
+   medium 幅で使う。上に menu ボタンと FAB、下に行き先。
+   ============================================================ */
+.rail {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  z-index: var(--z-bar);
+  width: var(--rail-w);
+  padding: calc(var(--safe-top) + var(--s-2)) 0 calc(var(--safe-bottom) + var(--s-2));
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s-3);
+  background: var(--surface);
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.rail::-webkit-scrollbar {
+  display: none;
+}
+
+/* レールの中の FAB。浮かせず、地に置く（レール自体が板なので） */
+.rail .fab {
+  position: static;
+  box-shadow: none;
+  flex: 0 0 auto;
+}
+
+/* 行き先を下に寄せたいときの詰め物 */
+.rail__spacer {
+  flex: 1;
+}
+
+.rail__item {
+  position: relative;
+  width: 56px;
+  min-height: 56px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  flex: 0 0 auto;
+  color: var(--on-surface-variant);
+  font-size: var(--t-label-m);
+  line-height: var(--lh-label-m);
+  font-weight: var(--w-medium);
+  /* ★札は1行★ 幅 56px は和文3文字で埋まる。折り返させると
+     アイコンごと持ち上がってレール全体がずれる */
+  white-space: nowrap;
+  transition: color var(--d-effects) var(--ease-effects);
+}
+
+/* 選択ピル（56×32）。レールは縦なので滑らせない — 縦の移動は
+   「上下の階層」に見えてしまう。出入りだけさせる */
+.rail__item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 56px;
+  height: 32px;
+  border-radius: var(--shape-full);
+  background: var(--secondary-container);
+  opacity: 0;
+  transition: opacity var(--d-effects) var(--ease-effects);
+}
+
+.rail__item[aria-current='page'] {
+  color: var(--on-surface);
+  font-weight: var(--w-emph);
+}
+
+.rail__item[aria-current='page']::before {
+  opacity: 1;
+}
+
+.rail__item .icon {
+  position: relative;
+  width: 24px;
+  height: 24px;
+  margin-top: 4px;
+  transition:
+    transform var(--d-spatial-fast) var(--ease-spatial-fast),
+    stroke-width var(--d-effects) var(--ease-effects);
+}
+
+.rail__item[aria-current='page'] .icon {
+  color: var(--on-secondary-container);
+  stroke-width: 2.2;
+}
+
+.rail__item.is-pressed .icon {
+  transform: scale(0.88);
+}
+
+/* ラベル。アイコンの下 */
+.rail__label {
+  position: relative;
+}
+
+/* ============================================================
+   3. ナビゲーションドロワー（M3 navigation drawer / 幅 360）
+   modal … 狭い画面で覆いをかけて開く（.scrim と一緒に使う）
+   standard … expanded 幅で常設。覆いは無い
+   ============================================================ */
+.drawer {
+  width: var(--drawer-w);
+  max-width: 84vw;
+  padding: var(--s-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: var(--surface-low);
+  color: var(--on-surface);
+}
+
+.drawer--modal {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  z-index: var(--z-sheet);
+  padding-top: calc(var(--safe-top) + var(--s-3));
+  padding-bottom: calc(var(--safe-bottom) + var(--s-3));
+  /* 右端だけ丸める。左端は画面の外 */
+  border-radius: 0 var(--shape-xl) var(--shape-xl) 0;
+  will-change: transform;
+}
+
+.drawer--standard {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  z-index: var(--z-bar);
+  padding-top: calc(var(--safe-top) + var(--s-3));
+  /* 常設なので角を丸めない。地と同じ色にして「板」に見せない */
+  background: var(--surface);
+  border-radius: 0;
+}
+
+.drawer__head {
+  padding: var(--s-4) var(--s-4) var(--s-2);
+  font-size: var(--t-title-l);
+  line-height: var(--lh-title-l);
+  font-weight: var(--w-medium);
+}
+
+/* 中の見出し（「最近」「フォルダ」）。M3 は title-small */
+.drawer__label {
+  padding: var(--s-4) var(--s-4) var(--s-2);
+  font-size: var(--t-title-s);
+  line-height: var(--lh-title-s);
+  font-weight: var(--w-medium);
+  color: var(--on-surface-variant);
+}
+
+/* 行き先。高さ 56、角は full、選択は secondary-container */
+.drawer__item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  width: 100%;
+  min-height: 56px;
+  padding: 0 var(--s-6);
+  border-radius: var(--shape-full);
+  color: var(--on-surface-variant);
+  font-size: var(--t-label-l);
+  line-height: var(--lh-label-l);
+  font-weight: var(--w-medium);
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  --drawer-layer: transparent;
+  box-shadow: inset 0 0 0 999px var(--drawer-layer);
+  transition:
+    background-color var(--d-effects) var(--ease-effects),
+    color var(--d-effects) var(--ease-effects),
+    box-shadow var(--d-tap) var(--ease-effects);
+}
+
+.drawer__item:active,
+.drawer__item.is-pressed {
+  --drawer-layer: var(--pressed-on-surface);
+}
+
+.drawer__item[aria-current='page'] {
+  background: var(--secondary-container);
+  color: var(--on-secondary-container);
+}
+
+.drawer__item .icon {
+  width: 24px;
+  height: 24px;
+}
+
+/* 右端の数字（未読件数など）。label-l / 等幅 */
+.drawer__n {
+  margin-left: auto;
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--t-label-l);
+}
+
+/* ============================================================
+   4. ボトムアプリバー（M3 bottom app bar / 高さ 80）
+   ナビゲーションバーの代わりに「その画面の操作」を下端に並べる。
+   ★行き先とは混ぜない★ 行き先はナビゲーションバー、操作はこちら。
+   ============================================================ */
+.bottombar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: var(--z-bar);
+  height: var(--inset-bottom);
+  padding: 0 var(--s-1) var(--safe-bottom) var(--s-1);
+  display: flex;
+  align-items: center;
+  gap: var(--s-1);
+  background: var(--surface-mid);
+}
+
+/* 右端に置く FAB。バーの中なので浮かせない（影を落とさない） */
+.bottombar .fab {
+  position: static;
+  margin-left: auto;
+  margin-right: var(--s-3);
+  box-shadow: none;
+}
+
+/* ============================================================
+   5. サイドシート（M3 side sheet）
+   右から出る補助の面。詳細・絞り込み・設定など、
+   「本文を見ながら触りたいもの」に使う（ボトムシートは本文を隠す）。
+   ============================================================ */
+.sidesheet {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: var(--z-sheet);
+  width: min(400px, 100%);
+  display: flex;
+  flex-direction: column;
+  background: var(--surface-low);
+  color: var(--on-surface);
+  /* 左端だけ丸める */
+  border-radius: var(--shape-xl) 0 0 var(--shape-xl);
+  box-shadow: var(--elev-1);
+  will-change: transform;
+}
+
+/* expanded 幅では覆いを掛けず、本文の横に並べる（standard side sheet） */
+@media (min-width: 840px) {
+  .sidesheet--standard {
+    position: relative;
+    border-radius: 0;
+    box-shadow: none;
+    box-shadow: inset 1px 0 0 var(--outline-variant);
+  }
+}
+
+.sidesheet__head {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  min-height: 64px;
+  padding: var(--safe-top) var(--s-2) 0 var(--s-6);
+}
+
+.sidesheet__title {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  font-size: var(--t-title-l);
+  line-height: var(--lh-title-l);
+  font-weight: var(--w-medium);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sidesheet__body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+  padding: 0 var(--s-6) calc(var(--s-6) + var(--safe-bottom));
+}
+
+.sidesheet .sidesheet__body > * {
+  flex-shrink: 0;
+}
+
+/* ============================================================
+   6. パンくず（M3 に無い。階層のあるアプリには要る）
+   ★モバイルでは出さない★ 幅が足りず横スクロールになり、
+   「戻る」より使いにくくなる。expanded 幅から出す
+   ============================================================ */
+.crumbs {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+  font-size: var(--t-body-m);
+  color: var(--on-surface-variant);
+}
+
+.crumbs::-webkit-scrollbar {
+  display: none;
+}
+
+.crumbs__item {
+  position: relative;
+  flex: 0 0 auto;
+  min-height: 32px;
+  padding: 0 var(--s-2);
+  display: inline-flex;
+  align-items: center;
+  border-radius: var(--shape-sm);
+  color: inherit;
+  white-space: nowrap;
+  --crumb-layer: transparent;
+  box-shadow: inset 0 0 0 999px var(--crumb-layer);
+  transition: box-shadow var(--d-tap) var(--ease-effects);
+}
+
+.crumbs__item:active,
+.crumbs__item.is-pressed {
+  --crumb-layer: var(--pressed-on-surface);
+}
+
+/* 当たり判定を 48 に */
+.crumbs__item::after {
+  content: '';
+  position: absolute;
+  inset: -8px 0;
+}
+
+/* いま居る階層。押せないので button ではなく span で書く */
+.crumbs__item[aria-current='page'] {
+  color: var(--on-surface);
+  font-weight: var(--w-medium);
+}
+
+.crumbs__sep {
+  flex: 0 0 auto;
+  color: var(--outline);
+  user-select: none;
+}
+
+/* 途中を省くとき。押すと残りをメニューで出す */
+.crumbs__more {
+  flex: 0 0 auto;
+}
+
+/* ============================================================
+   7. ページ送り（M3 に無い。表と検索結果には要る）
+   ★一覧では使わない★ 一覧は無限スクロール + 引いて更新。
+   ページ送りが要るのは「件数と位置が意味を持つ」表と検索結果だけ
+   ============================================================ */
+.pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-1);
+  flex-wrap: wrap;
+}
+
+.pager__item {
+  position: relative;
+  min-width: 40px;
+  height: 40px;
+  padding: 0 var(--s-2);
+  display: inline-grid;
+  place-items: center;
+  border-radius: var(--shape-full);
+  color: var(--on-surface-variant);
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--t-label-l);
+  font-weight: var(--w-medium);
+  --pager-layer: transparent;
+  box-shadow: inset 0 0 0 999px var(--pager-layer);
+  transition:
+    border-radius var(--d-spatial-fast) var(--ease-spatial-fast),
+    background-color var(--d-effects) var(--ease-effects),
+    box-shadow var(--d-tap) var(--ease-effects);
+}
+
+.pager__item::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+}
+
+.pager__item:active,
+.pager__item.is-pressed {
+  border-radius: var(--shape-md);
+  --pager-layer: var(--pressed-on-surface);
+}
+
+.pager__item[aria-current='page'] {
+  background: var(--primary);
+  color: var(--on-primary);
+}
+
+.pager__item:disabled {
+  color: rgb(var(--on-surface-rgb) / 0.38);
+  cursor: not-allowed;
+}
+
+/* 省略の「…」。押せないので判定を持たせない */
+.pager__gap {
+  min-width: 24px;
+  text-align: center;
+  color: var(--outline);
+  user-select: none;
+}
+
+/* ============================================================
+   8. タブの追加種
+   ============================================================ */
+
+/* secondary tabs … 画面の中の入れ子のタブ。印は幅いっぱい、色は on-surface。
+   primary tabs（components-core.css）と**同じ画面で2階層**使うときだけ */
+.tabs--secondary .tabs__item[aria-selected='true'] {
+  color: var(--on-surface);
+}
+
+.tabs--secondary .tabs__ind::before {
+  inset: 0;
+  border-radius: 0;
+  background: var(--on-surface);
+}
+
+/* 横スクロールするタブ … 区画数が多くて等分できないとき。
+   ★インジケータの幅と位置は JS が書く★ 等分でないので calc できない
+   （--tab-x = 左端 px、--tab-w = 幅 px） */
+.tabs--scroll {
+  display: flex;
+  overflow-x: auto;
+  scrollbar-width: none;
+  scroll-behavior: smooth;
+}
+
+.tabs--scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.tabs--scroll .tabs__item {
+  flex: 0 0 auto;
+  padding: 0 var(--s-4);
+}
+
+.tabs--scroll .tabs__ind {
+  width: var(--tab-w, 0px);
+  transform: translateX(var(--tab-x, 0px));
+}
+
+.tabs--scroll .tabs__ind::before {
+  inset: 0 var(--s-2);
+}

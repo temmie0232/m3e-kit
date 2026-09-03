@@ -21,8 +21,13 @@ watchPress()
 watchMotionPrefs()
 ```
 
-`components.css` → `base.css` → `tokens.css` → `m3-scheme.css` と
-`@import` で芋づるに入るので、読むのは1本だけでよい。
+`components.css` が入口。そこから `base.css` → `tokens.css` → `m3-scheme.css` と
+部品の5本（core / nav / overlay / form / data）が `@import` で芋づるに入るので、
+読むのは1本だけでよい。
+
+**★分割の順番を変えない★** 後ろのファイルが前を上書きする前提で書いてある。
+使わない分類（例: PC を作らないので `-nav`）を外しても壊れないが、
+`components.css` から `@import` を消す形にすること。
 
 `<head>` にこれも要る:
 
@@ -43,8 +48,11 @@ watchMotionPrefs()
 | `press.ts` | 押下の反応が 150ms 遅れる（Chromium の `:active` の遅延） |
 | `motion.ts` | バネが `cubic-bezier` の近似のまま（それでも十分見られる） |
 | `loader.ts` | 読み込みの印の形が変わらない（回るだけ） |
+| `overlay.ts` | メニュー・候補が画面中央に出る（Popover API の既定位置） |
 
 配色・形・字・間隔は CSS だけで全部効く。
+開閉そのもの（外側を押して閉じる・Esc）は `popover` 属性と `<details>` が持つので、
+`overlay.ts` を入れなくても機能はする。
 
 ---
 
@@ -109,12 +117,18 @@ applySeed('teal')
 | | |
 |---|---|
 | `styles/m3-scheme.css` | **生成物。** `--md-sys-color-*`（7シード × ライト/ダーク） |
-| `styles/tokens.css` | 短い別名（`--primary` `--surface-mid` …）+ 形・字・間隔・動き・外殻の幾何・z-index |
+| `styles/tokens.css` | 短い別名（`--primary` `--surface-mid` …）+ 形・字・間隔・動き・外殻の幾何・画面幅・z-index・図の系列色 |
 | `styles/base.css` | reset。「Webページの顔」（長押しメニュー・青い選択範囲・タップの点滅）を消す |
-| `styles/components.css` | 部品の実体。29 部品 |
+| `styles/components.css` | **入口。** 下の5本を束ねるだけ |
+| `styles/components-core.css` | 骨組み・バー・ボタン・入力・選択・面と行・知らせ・進捗・シート・ダイアログ |
+| `styles/components-nav.css` | レール・ドロワー・ボトムアプリバー・サイドシート・パンくず・ページ送り・タブの追加種 |
+| `styles/components-overlay.css` | メニュー・ポップオーバー・ツールチップ・開閉・コマンドパレット・全画面の検索 |
+| `styles/components-form.css` | コンボボックス・日付/時刻・OTP・トグル・分割ボタン・FABメニュー・ドロップ領域・評価 |
+| `styles/components-data.css` | アバター・表・カルーセル・木・手順・年表・環の進捗・図・本文・コード |
 | `lib/motion.ts` | M3 のバネを `linear()` に焼く。速度追跡・中断可能な動き・ラバーバンド・ハプティクス |
 | `lib/loader.ts` | 7つの多角形を補間する読み込みの印 |
 | `lib/press.ts` | `pointerdown` で `.is-pressed` を付ける（委譲。document に1つ） |
+| `lib/overlay.ts` | メニュー・候補の位置決め、コンテキストメニュー、↑↓ の操作、ツールチップ |
 | `lib/theme.ts` | 明暗とシードの適用・保存・`theme-color` の追従 |
 | `lib/seeds.ts` | **生成物。** 設定画面が並べる色の一覧 |
 

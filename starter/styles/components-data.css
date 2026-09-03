@@ -1,0 +1,843 @@
+/* ============================================================
+   見せるもの
+   アバター・表・カルーセル・木・手順・年表・図・本文・コード・
+   縦横比・スクロール域・環状の進捗
+   ============================================================ */
+
+/* ============================================================
+   1. アバター
+   ============================================================ */
+.avatar {
+  flex: 0 0 auto;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border-radius: var(--shape-full);
+  background: var(--secondary-container);
+  color: var(--on-secondary-container);
+  font-size: var(--t-title-m);
+  line-height: 1;
+  font-weight: var(--w-medium);
+  /* 頭文字が2文字入っても崩れない */
+  white-space: nowrap;
+  user-select: none;
+}
+
+.avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.avatar--sm {
+  width: 32px;
+  height: 32px;
+  font-size: var(--t-label-l);
+}
+
+.avatar--lg {
+  width: 56px;
+  height: 56px;
+  font-size: var(--t-headline-s);
+}
+
+/* 状態の点（オンライン等）。★色だけで意味を持たせない★
+   隣にラベルか読み上げテキストを置く */
+.avatar-wrap {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.avatar__dot {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 12px;
+  height: 12px;
+  border-radius: var(--shape-full);
+  background: var(--primary);
+  box-shadow: 0 0 0 2px var(--surface);
+}
+
+/* 重ねて並べる。★ここは margin が正しい★ gap は「離す」もので、
+   負の gap は書けない。重なりは間隔ではなく配置 */
+.avatars {
+  display: flex;
+  align-items: center;
+}
+
+.avatars > .avatar + .avatar {
+  margin-left: -10px;
+  box-shadow: 0 0 0 2px var(--surface);
+}
+
+/* ============================================================
+   2. 表（M3 data table）
+
+   ★モバイルでは表を使わない★ 360px に列は2つしか入らない。
+   携帯では .rowlist（主文 + 副題 + 右端の値）に畳み、
+   expanded 幅から表に切り替える。→ docs/18-data.md
+   ============================================================ */
+.table-wrap {
+  overflow: auto;
+  overscroll-behavior-x: contain;
+  border-radius: var(--shape-lg);
+  background: var(--surface-mid);
+  /* 端が切れていることを示す。横に続きがあると分かる */
+  scrollbar-width: thin;
+  scrollbar-color: var(--outline-variant) transparent;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--t-body-m);
+  line-height: var(--lh-body-m);
+}
+
+/* 見出し。★sticky にする★ 縦に長い表で列の意味が消える */
+.table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  height: 56px;
+  padding: 0 var(--s-4);
+  text-align: left;
+  white-space: nowrap;
+  background: var(--surface-mid);
+  color: var(--on-surface-variant);
+  font-size: var(--t-title-s);
+  line-height: var(--lh-title-s);
+  font-weight: var(--w-medium);
+  box-shadow: inset 0 -1px 0 var(--outline-variant);
+}
+
+/* ★区切りは border ではなく inset の影★ border-collapse と sticky を
+   併用すると、Chromium で見出しの下線だけが一緒にスクロールする */
+.table td {
+  height: 52px;
+  padding: 0 var(--s-4);
+  box-shadow: inset 0 -1px 0 var(--outline-variant);
+}
+
+.table tbody tr {
+  transition: background-color var(--d-effects) var(--ease-effects);
+}
+
+.table tbody tr:hover td {
+  background: var(--hover-on-surface);
+}
+
+.table tbody tr[aria-selected='true'] td {
+  background: var(--secondary-container);
+  color: var(--on-secondary-container);
+}
+
+/* 数値の列。右寄せ・等幅（桁を目で数える） */
+.table__num {
+  text-align: right;
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* 並べ替えできる見出し。
+   ★aria-sort は <th> に付ける★ ARIA では columnheader が持つ属性で、
+   中のボタンに付けても読み上げは並び順を伝えない */
+.table__sort {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-1);
+  color: inherit;
+  font: inherit;
+}
+
+.table__sort .icon {
+  width: 16px;
+  height: 16px;
+  opacity: 0;
+  transition:
+    opacity var(--d-effects) var(--ease-effects),
+    transform var(--d-spatial-fast) var(--ease-spatial-fast);
+}
+
+.table th[aria-sort] .table__sort .icon {
+  opacity: 1;
+  color: var(--primary);
+}
+
+.table th[aria-sort='descending'] .table__sort .icon {
+  transform: rotate(180deg);
+}
+
+/* 左端を固定する（名前の列）。★背景を必ず塗る★ 透けると下の行が見える */
+.table__stick {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background: var(--surface-mid);
+}
+
+.table th.table__stick {
+  z-index: 2;
+}
+
+/* 詰めた表（1画面に入る行数を増やす） */
+.table--dense th {
+  height: 40px;
+}
+
+.table--dense td {
+  height: 36px;
+}
+
+/* ============================================================
+   3. カルーセル
+   ★M3 Expressive の multi-browse（端が押し潰れる）は真似ない★
+   CSS だけで作ると項目幅が動いて scroll-snap が暴れる。
+   吸着する等幅の並びで十分に M3 に見える
+   ============================================================ */
+.carousel {
+  display: flex;
+  gap: var(--s-2);
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  /* ★端の項目を画面端に貼り付けない★ 前後があることを見せる */
+  padding-inline: var(--s-4);
+  scroll-padding-inline: var(--s-4);
+}
+
+.carousel::-webkit-scrollbar {
+  display: none;
+}
+
+/* .main--padded の直下に置くときは、親の左右 padding を打ち消す
+   （カルーセルは画面の端まで流れるほうが「続きがある」と伝わる） */
+.main--padded > .carousel {
+  margin-inline: calc(var(--s-4) * -1);
+}
+
+.carousel__item {
+  flex: 0 0 auto;
+  width: 72%;
+  max-width: 320px;
+  scroll-snap-align: start;
+  border-radius: var(--shape-lg);
+  background: var(--surface-mid);
+  overflow: hidden;
+}
+
+.carousel--sm .carousel__item {
+  width: 40%;
+  max-width: 180px;
+}
+
+/* 位置の印。M3 Expressive は「いま居る点が横に伸びる」 */
+.dots {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+}
+
+.dots__d {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--shape-full);
+  background: var(--outline-variant);
+  transition:
+    width var(--d-spatial) var(--ease-spatial),
+    background-color var(--d-effects) var(--ease-effects);
+}
+
+.dots__d[aria-current='true'] {
+  width: 20px;
+  background: var(--primary);
+}
+
+/* ============================================================
+   4. 縦横比の器
+   画像・動画・地図を「読み込む前から同じ高さ」で置く。
+   ★これが無いと、画像が届いた瞬間に下の内容が飛ぶ★
+   ============================================================ */
+.ratio {
+  position: relative;
+  width: 100%;
+  aspect-ratio: var(--ratio, 16 / 9);
+  overflow: hidden;
+  border-radius: var(--shape-md);
+  background: var(--surface-highest);
+}
+
+.ratio > img,
+.ratio > video,
+.ratio > iframe,
+.ratio > canvas {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  border: 0;
+}
+
+/* ============================================================
+   5. スクロール域
+   ★細いつまみを出すのは PC だけ★ 触る画面ではつまみを出さない
+   （指で掴めない幅のものを見せると、掴もうとして失敗する）
+   ============================================================ */
+.scroller {
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--outline-variant) transparent;
+}
+
+.scroller::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.scroller::-webkit-scrollbar-thumb {
+  background: var(--outline-variant);
+  border-radius: var(--shape-full);
+}
+
+.scroller::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+@media (pointer: coarse) {
+  .scroller {
+    scrollbar-width: none;
+  }
+
+  .scroller::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* 端をぼかして「続きがある」と伝える。★影ではなく mask★
+   影だと中身の色に応じて見え方が変わる */
+.scroller--fade {
+  mask-image: linear-gradient(to bottom, transparent 0, #000 16px, #000 calc(100% - 16px), transparent 100%);
+}
+
+.scroller--fade-x {
+  mask-image: linear-gradient(to right, transparent 0, #000 16px, #000 calc(100% - 16px), transparent 100%);
+}
+
+/* ============================================================
+   6. 木（入れ子の一覧）
+   .row の派生。深さは --depth（数）で渡す
+   ============================================================ */
+.tree {
+  display: flex;
+  flex-direction: column;
+}
+
+.tree__item {
+  padding-left: calc(var(--s-4) + var(--depth, 0) * var(--s-5));
+}
+
+.tree__toggle {
+  flex: 0 0 auto;
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  margin-left: calc(var(--s-4) * -1);
+  color: var(--on-surface-variant);
+}
+
+.tree__toggle .icon {
+  width: 16px;
+  height: 16px;
+  transition: transform var(--d-spatial-fast) var(--ease-spatial-fast);
+}
+
+.tree__item[aria-expanded='true'] .tree__toggle .icon {
+  transform: rotate(90deg);
+}
+
+/* 葉（開けないもの）。矢印の場所は空けたまま — 揃わないと読みにくい */
+.tree__leaf {
+  flex: 0 0 auto;
+  width: 24px;
+  margin-left: calc(var(--s-4) * -1);
+}
+
+/* ============================================================
+   7. 手順（stepper）
+   ★「いま何番目か」だけを言う★ 各段に説明を足すと、
+   本文より手順の帯のほうが大きくなる
+   ============================================================ */
+.steps {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+.steps__item {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  color: var(--on-surface-variant);
+  font-size: var(--t-label-l);
+  font-weight: var(--w-medium);
+  white-space: nowrap;
+}
+
+.steps__dot {
+  flex: 0 0 auto;
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--shape-full);
+  background: var(--surface-highest);
+  color: var(--on-surface-variant);
+  font-family: var(--font-num);
+  font-size: var(--t-label-m);
+  transition:
+    background-color var(--d-effects) var(--ease-effects),
+    color var(--d-effects) var(--ease-effects);
+}
+
+.steps__item--done .steps__dot {
+  background: var(--primary);
+  color: var(--on-primary);
+}
+
+.steps__item--now .steps__dot {
+  background: var(--primary-container);
+  color: var(--on-primary-container);
+}
+
+.steps__item--now {
+  color: var(--on-surface);
+}
+
+.steps__line {
+  flex: 1;
+  min-width: var(--s-4);
+  height: 2px;
+  border-radius: var(--shape-full);
+  background: var(--outline-variant);
+}
+
+.steps__line--done {
+  background: var(--primary);
+}
+
+/* 縦に積む版（説明が長いとき） */
+.steps--v {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+}
+
+.steps--v .steps__item {
+  align-items: flex-start;
+  padding-bottom: var(--s-4);
+  position: relative;
+}
+
+.steps--v .steps__item:not(:last-child)::before {
+  content: '';
+  position: absolute;
+  left: 11px;
+  top: 24px;
+  bottom: 0;
+  width: 2px;
+  background: var(--outline-variant);
+}
+
+/* ============================================================
+   8. 年表（timeline）
+   ============================================================ */
+.timeline {
+  display: flex;
+  flex-direction: column;
+}
+
+.timeline__item {
+  position: relative;
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr);
+  gap: var(--s-3);
+  padding-bottom: var(--s-5);
+}
+
+.timeline__item:not(:last-child)::before {
+  content: '';
+  position: absolute;
+  left: 11px;
+  top: 18px;
+  bottom: 0;
+  width: 2px;
+  background: var(--outline-variant);
+}
+
+.timeline__dot {
+  width: 12px;
+  height: 12px;
+  margin: 6px auto 0;
+  border-radius: var(--shape-full);
+  background: var(--primary);
+}
+
+.timeline__dot--muted {
+  background: var(--outline-variant);
+}
+
+.timeline__dot--alert {
+  background: var(--error);
+}
+
+.timeline__body {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.timeline__when {
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--t-body-s);
+  color: var(--on-surface-variant);
+}
+
+/* ============================================================
+   9. 環状の進捗（determinate circular progress）
+   ★割合は --p（0〜100 の数）で渡す★
+   conic-gradient + mask で描く（SVG を書かずに済む）
+   ============================================================ */
+.ring {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  flex: 0 0 auto;
+  border-radius: var(--shape-full);
+  background: conic-gradient(
+    var(--primary) calc(var(--p, 0) * 1%),
+    var(--secondary-container) 0
+  );
+  mask: radial-gradient(closest-side, transparent 70%, #000 71%);
+  transition: background var(--d-spatial) var(--ease-spatial);
+}
+
+.ring--over {
+  background: conic-gradient(var(--error) calc(var(--p, 0) * 1%), var(--error-container) 0);
+}
+
+/* 中に数字を置くとき。mask が掛かった要素の中には置けないので外に重ねる */
+.ring-wrap {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+}
+
+.ring-wrap > .ring {
+  grid-area: 1 / 1;
+}
+
+.ring__label {
+  grid-area: 1 / 1;
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--t-label-m);
+  font-weight: var(--w-medium);
+}
+
+/* ============================================================
+   10. 図（chart）
+   ★描くのは JS / SVG。ここで決めるのは「色と目盛りの作法」だけ★
+   系列色は tokens.css の --series-1〜5。
+   → docs/18-data.md
+   ============================================================ */
+.chart {
+  width: 100%;
+  display: block;
+  overflow: visible;
+}
+
+.chart__grid {
+  stroke: var(--grid);
+  stroke-width: 1;
+  fill: none;
+}
+
+.chart__axis {
+  fill: var(--axis);
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--t-label-s);
+}
+
+.chart__line {
+  fill: none;
+  stroke: var(--series-1);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.chart__area {
+  fill: var(--series-1);
+  opacity: 0.14;
+  stroke: none;
+}
+
+.chart__bar {
+  fill: var(--series-1);
+}
+
+/* 系列の割り当て。data-series="2" のように書く */
+[data-series='2'] {
+  stroke: var(--series-2);
+  fill: var(--series-2);
+}
+
+[data-series='3'] {
+  stroke: var(--series-3);
+  fill: var(--series-3);
+}
+
+[data-series='4'] {
+  stroke: var(--series-4);
+  fill: var(--series-4);
+}
+
+[data-series='5'] {
+  stroke: var(--series-5);
+  fill: var(--series-5);
+}
+
+.chart__line[data-series] {
+  fill: none;
+}
+
+/* 図の凡例。★系列が3つ以下なら凡例を置かず、線の横に直接ラベルを書く★ */
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-3);
+  font-size: var(--t-body-s);
+  color: var(--on-surface-variant);
+}
+
+.legend__item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-1);
+}
+
+.legend__key {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  background: var(--series-1);
+}
+
+/* ============================================================
+   11. 本文（rendered markdown / 記事）
+   AI の返答・README・記事など、こちらが構造を決められない HTML 用。
+   ★.prose の中だけは要素セレクタで書く★ 生成された HTML に
+   クラスを付けられないので、ここだけは例外
+   ============================================================ */
+.prose {
+  font-size: var(--t-body-l);
+  line-height: var(--lh-body);
+  color: var(--on-surface);
+  /* 長押しでコピーできるようにする（base.css の user-select: none を戻す） */
+  -webkit-user-select: text;
+  user-select: text;
+  overflow-wrap: anywhere;
+}
+
+.prose > * + * {
+  margin-top: var(--s-4);
+}
+
+.prose h1,
+.prose h2,
+.prose h3,
+.prose h4 {
+  margin: var(--s-6) 0 0;
+  font-weight: var(--w-medium);
+  line-height: var(--lh-tight);
+}
+
+.prose h1 {
+  font-size: var(--t-headline-s);
+}
+
+.prose h2 {
+  font-size: var(--t-title-l);
+}
+
+.prose h3 {
+  font-size: var(--t-title-m);
+}
+
+.prose h4 {
+  font-size: var(--t-title-s);
+  color: var(--on-surface-variant);
+}
+
+.prose p {
+  margin: 0;
+}
+
+.prose ul,
+.prose ol {
+  margin: 0;
+  padding-left: var(--s-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+}
+
+.prose li::marker {
+  color: var(--on-surface-variant);
+}
+
+/* 引用。★左の線 1本だけ★ 地を塗るとカードに見えて、
+   引用なのか自分の言葉なのか分からなくなる */
+.prose blockquote {
+  margin: 0;
+  padding-left: var(--s-4);
+  border-left: 2px solid var(--outline-variant);
+  color: var(--on-surface-variant);
+}
+
+.prose a {
+  color: var(--primary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.prose code {
+  padding: 2px 6px;
+  border-radius: var(--shape-xs);
+  background: var(--surface-highest);
+  font-family: var(--font-num);
+  font-size: 0.9em;
+}
+
+.prose pre {
+  margin: 0;
+  padding: var(--s-3) var(--s-4);
+  border-radius: var(--shape-md);
+  background: var(--surface-lowest);
+  overflow-x: auto;
+  font-family: var(--font-num);
+  font-size: var(--t-body-m);
+  line-height: var(--lh-snug);
+}
+
+.prose pre code {
+  padding: 0;
+  background: none;
+  font-size: inherit;
+}
+
+.prose hr {
+  height: 1px;
+  border: 0;
+  background: var(--outline-variant);
+}
+
+.prose img {
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--shape-md);
+}
+
+.prose table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--t-body-m);
+}
+
+.prose th,
+.prose td {
+  padding: var(--s-2) var(--s-3);
+  text-align: left;
+  box-shadow: inset 0 -1px 0 var(--outline-variant);
+}
+
+.prose th {
+  color: var(--on-surface-variant);
+  font-weight: var(--w-medium);
+}
+
+/* ============================================================
+   12. コード欄・キー
+   ============================================================ */
+.code {
+  padding: var(--s-3) var(--s-4);
+  border-radius: var(--shape-md);
+  background: var(--surface-lowest);
+  color: var(--on-surface);
+  overflow-x: auto;
+  font-family: var(--font-num);
+  font-size: var(--t-body-m);
+  line-height: var(--lh-snug);
+  -webkit-user-select: text;
+  user-select: text;
+  white-space: pre;
+}
+
+.kbd {
+  display: inline-grid;
+  place-items: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: var(--shape-xs);
+  background: var(--surface-highest);
+  box-shadow: inset 0 0 0 1px var(--outline-variant);
+  color: var(--on-surface-variant);
+  font-family: var(--font-num);
+  font-size: var(--t-label-s);
+  line-height: 1;
+}
+
+/* ============================================================
+   13. 区切りに文字を入れる
+   ============================================================ */
+.divider--label {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  height: auto;
+  background: none;
+  color: var(--on-surface-variant);
+  font-size: var(--t-body-s);
+}
+
+.divider--label::before,
+.divider--label::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--outline-variant);
+}
+
+/* ============================================================
+   14. 貼り付く見出し（長い一覧の区切り）
+   ============================================================ */
+.label--sticky {
+  position: sticky;
+  top: var(--inset-top);
+  z-index: 1;
+  padding: var(--s-2) 0;
+  /* ★地を塗る★ 塗らないと下の行が透けて読めなくなる */
+  background: var(--surface);
+}

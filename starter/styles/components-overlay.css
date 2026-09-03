@@ -1,0 +1,473 @@
+/* ============================================================
+   重ねるもの — メニュー・ポップオーバー・ツールチップ・開閉・コマンドパレット
+
+   ★出し入れは Popover API に任せる★ `popover` 属性を付けると、
+   外側を押して閉じる・Esc で閉じる・最前面に出す（top layer）を
+   ブラウザがやってくれる。自前の「外側クリック検出」は書かない
+   （必ずスクロール中や iframe で漏れる）。
+     Chrome 114+ / Safari 17+ / Firefox 125+
+
+     <button popovertarget="m1">…</button>
+     <div popover id="m1" class="menu">…</div>
+
+   位置決めだけは JS（lib/overlay.ts の anchorTo）。CSS anchor positioning が
+   全ブラウザに入るまでは、これがいちばん確実。
+
+   ★モバイルではメニューを使わず、ボトムシートで出す★
+   小さい画面で「押した場所の近くに小さい板」を出すと、指で隠れる。
+   → docs/16-overlays.md
+   ============================================================ */
+
+/* Popover API が付いた要素の共通の下敷き。
+   ★margin: 0 / inset: auto を明示する★ [popover] の既定は
+   「中央に置いて margin: auto」なので、これが無いと JS の left/top が効かない */
+[popover] {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  inset: auto;
+  overflow: visible;
+  background: transparent;
+  color: inherit;
+}
+
+/* 覆いは出さない（メニューは軽い。暗幕を出すのはシートとダイアログだけ） */
+[popover]::backdrop {
+  background: transparent;
+}
+
+/* ============================================================
+   1. メニュー（M3 menu）
+   角 xs(4) / surface-container / elev-2 / 項目 48
+   ============================================================ */
+.menu {
+  min-width: 112px;
+  max-width: min(320px, calc(100vw - 32px));
+  max-height: min(60dvh, 480px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: var(--s-1) 0;
+  border-radius: var(--shape-xs);
+  background: var(--surface-mid);
+  color: var(--on-surface);
+  box-shadow: var(--elev-2);
+  /* 開くときに少しだけ伸びる。位置は JS が決めるので transform は
+     scale だけに使う（translate を混ぜると着地位置がズレる） */
+  transform-origin: var(--menu-origin, top left);
+}
+
+.menu__item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  width: 100%;
+  min-height: 48px;
+  padding: 0 var(--s-3);
+  color: inherit;
+  font-size: var(--t-label-l);
+  line-height: var(--lh-label-l);
+  font-weight: var(--w-medium);
+  text-align: left;
+  white-space: nowrap;
+  --menu-layer: transparent;
+  box-shadow: inset 0 0 0 999px var(--menu-layer);
+  transition: box-shadow var(--d-tap) var(--ease-effects);
+}
+
+.menu__item:active,
+.menu__item.is-pressed {
+  --menu-layer: var(--pressed-on-surface);
+}
+
+/* キーボードで辿っているときの位置。マウスの hover と同じ見た目にする */
+.menu__item[aria-selected='true'],
+.menu__item:hover:not([aria-disabled='true']) {
+  --menu-layer: var(--hover-on-surface);
+}
+
+.menu__item[aria-disabled='true'] {
+  color: rgb(var(--on-surface-rgb) / 0.38);
+  pointer-events: none;
+}
+
+.menu__item--danger {
+  color: var(--error);
+}
+
+.menu__item .icon {
+  width: 20px;
+  height: 20px;
+  color: var(--on-surface-variant);
+}
+
+.menu__item--danger .icon {
+  color: var(--error);
+}
+
+/* 右端。ショートカット・チェック・入れ子の矢印 */
+.menu__trailing {
+  margin-left: auto;
+  padding-left: var(--s-4);
+  color: var(--on-surface-variant);
+  font-family: var(--font-num);
+  font-size: var(--t-label-m);
+}
+
+/* 見出し（メニューを束ねる） */
+.menu__label {
+  padding: var(--s-2) var(--s-3);
+  font-size: var(--t-label-m);
+  line-height: var(--lh-label-m);
+  font-weight: var(--w-medium);
+  color: var(--on-surface-variant);
+}
+
+.menu__sep {
+  height: 1px;
+  margin: var(--s-1) 0;
+  background: var(--outline-variant);
+}
+
+/* ============================================================
+   2. ポップオーバー（M3 に無い。中身が自由な小さい板）
+   メニューとの違いは「行が並ぶ」か「自由な中身か」だけ。
+   ============================================================ */
+.popover {
+  width: max-content;
+  max-width: min(320px, calc(100vw - 32px));
+  padding: var(--s-4);
+  border-radius: var(--shape-lg);
+  background: var(--surface-high);
+  color: var(--on-surface);
+  box-shadow: var(--elev-2);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  font-size: var(--t-body-m);
+  line-height: var(--lh-body-m);
+}
+
+/* ============================================================
+   3. ツールチップ（M3 plain / rich tooltip）
+
+   ★触る画面には出さない★ 指には hover が無いので、タップで出すと
+   「押した」のか「説明が出た」のか分からなくなる。
+   モバイルでは代わりに、ラベルを省かないか .banner で1度だけ説明する。
+   ============================================================ */
+.tip {
+  max-width: 224px;
+  padding: var(--s-1) var(--s-2);
+  border-radius: var(--shape-xs);
+  background: var(--inverse-surface);
+  color: var(--inverse-on-surface);
+  font-size: var(--t-body-s);
+  line-height: var(--lh-body-s);
+  text-align: center;
+  pointer-events: none;
+}
+
+/* rich tooltip … 表題・本文・操作を持てる。こちらは押せる */
+.tip--rich {
+  max-width: 320px;
+  padding: var(--s-3) var(--s-4);
+  border-radius: var(--shape-md);
+  background: var(--surface-high);
+  color: var(--on-surface);
+  box-shadow: var(--elev-2);
+  text-align: left;
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+
+.tip__title {
+  font-size: var(--t-title-s);
+  line-height: var(--lh-title-s);
+  font-weight: var(--w-medium);
+}
+
+/* ============================================================
+   4. 開閉（アコーディオン / 折りたたみ）
+
+   ★<details> / <summary> で作る★ 開閉の状態・キーボード操作・
+   読み上げをブラウザが持つ。div と JS で作り直さない。
+   ============================================================ */
+.accordion {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+
+.accordion__item {
+  border-radius: var(--shape-lg);
+  background: var(--surface-mid);
+  overflow: hidden;
+}
+
+/* 見出しの帯。★list-style を消す★ 消さないと ▶ が出る */
+.accordion__head {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  min-height: 56px;
+  padding: var(--s-2) var(--s-4);
+  cursor: pointer;
+  list-style: none;
+  font-size: var(--t-body-l);
+  --acc-layer: transparent;
+  box-shadow: inset 0 0 0 999px var(--acc-layer);
+  transition: box-shadow var(--d-tap) var(--ease-effects);
+}
+
+.accordion__head::-webkit-details-marker {
+  display: none;
+}
+
+.accordion__head:active {
+  --acc-layer: var(--pressed-on-surface);
+}
+
+.accordion__head > :first-child {
+  flex: 1;
+  min-width: 0;
+}
+
+.accordion__chevron {
+  flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
+  color: var(--on-surface-variant);
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform var(--d-spatial-fast) var(--ease-spatial-fast);
+}
+
+.accordion__item[open] .accordion__chevron {
+  transform: rotate(90deg);
+}
+
+.accordion__body {
+  padding: 0 var(--s-4) var(--s-4);
+  font-size: var(--t-body-m);
+  line-height: var(--lh-body);
+  color: var(--on-surface-variant);
+}
+
+/* 高さのアニメーション。auto への transition は本来できないが、
+   interpolate-size と ::details-content が入った環境ではできる。
+   ★入っていない環境では「開閉が瞬間的」になるだけ★ 壊れない */
+@supports (interpolate-size: allow-keywords) {
+  :root {
+    interpolate-size: allow-keywords;
+  }
+
+  .accordion__item::details-content {
+    height: 0;
+    overflow: hidden;
+    transition:
+      height var(--d-spatial) var(--ease-spatial),
+      content-visibility var(--d-spatial) allow-discrete;
+  }
+
+  .accordion__item[open]::details-content {
+    height: auto;
+  }
+}
+
+/* ============================================================
+   5. コマンドパレット（⌘K）
+   検索欄 + 束ねた候補。キーボードで辿る。
+   ★モバイルでは全画面の検索（.searchview）にする★
+   ============================================================ */
+.command {
+  position: fixed;
+  left: 50%;
+  top: 12vh;
+  transform: translateX(-50%);
+  z-index: var(--z-menu);
+  width: min(560px, calc(100% - var(--s-8)));
+  max-height: 70dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: var(--shape-xl);
+  background: var(--surface-high);
+  color: var(--on-surface);
+  box-shadow: var(--elev-3);
+}
+
+.command__head {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  min-height: 56px;
+  padding: 0 var(--s-4);
+  box-shadow: inset 0 -1px 0 var(--outline-variant);
+  color: var(--on-surface-variant);
+}
+
+.command__input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: none;
+  color: var(--on-surface);
+  /* ★16px を下回らせない★ iOS が拡大する */
+  font-size: var(--t-input);
+}
+
+.command__input:focus {
+  outline: none;
+}
+
+.command__list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: var(--s-2);
+}
+
+.command__item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  width: 100%;
+  min-height: 48px;
+  padding: 0 var(--s-3);
+  border-radius: var(--shape-md);
+  color: inherit;
+  font-size: var(--t-body-l);
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  transition: background-color var(--d-effects) var(--ease-effects);
+}
+
+/* いま辿っている候補。★hover ではなく aria-selected で示す★
+   キーボードで下に動かしたとき、マウスの位置に引きずられない */
+.command__item[aria-selected='true'] {
+  background: var(--secondary-container);
+  color: var(--on-secondary-container);
+}
+
+.command__item .icon {
+  width: 20px;
+  height: 20px;
+  color: var(--on-surface-variant);
+}
+
+.command__item[aria-selected='true'] .icon {
+  color: inherit;
+}
+
+.command__sub {
+  margin-left: auto;
+  padding-left: var(--s-4);
+  color: var(--on-surface-variant);
+  font-size: var(--t-body-s);
+}
+
+.command__item[aria-selected='true'] .command__sub {
+  color: inherit;
+}
+
+/* ============================================================
+   6. 全画面の検索（M3 search view）
+   モバイルで検索欄を押したときに開く。候補は普通の .rowlist
+   ============================================================ */
+.searchview {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-menu);
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  color: var(--on-surface);
+}
+
+.searchview__head {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  min-height: 64px;
+  padding: var(--safe-top) var(--s-2) 0;
+}
+
+.searchview__input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: none;
+  color: var(--on-surface);
+  font-size: var(--t-input);
+}
+
+.searchview__input:focus {
+  outline: none;
+}
+
+.searchview__body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding-bottom: calc(var(--s-6) + var(--safe-bottom));
+}
+
+/* ============================================================
+   7. ダイアログの追加種
+   ============================================================ */
+
+/* 印付きのダイアログ（M3 basic dialog with icon）。
+   本当に戻せないことを、文字だけでなく形でも言う */
+.dialog--alert {
+  align-items: center;
+  text-align: center;
+}
+
+.dialog__icon {
+  width: 24px;
+  height: 24px;
+  color: var(--error);
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.dialog--alert .dialog__acts {
+  align-self: stretch;
+}
+
+/* 中身が長いダイアログ（利用規約など）。頭と足を固定して中だけ流す */
+.dialog--scroll {
+  padding: 0;
+  gap: 0;
+}
+
+.dialog--scroll .dialog__title {
+  padding: var(--s-6) var(--s-6) var(--s-3);
+}
+
+.dialog__scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0 var(--s-6);
+  box-shadow:
+    inset 0 1px 0 var(--outline-variant),
+    inset 0 -1px 0 var(--outline-variant);
+}
+
+.dialog--scroll .dialog__acts {
+  padding: var(--s-3) var(--s-6) var(--s-6);
+}
