@@ -41,7 +41,7 @@ watchMotionPrefs()
 
 ### CSS だけでも動く
 
-`lib/` を入れないと失われるのは3つだけ。
+`lib/` を入れないと失われるのはこれだけ。
 
 | 入れないと | どうなる |
 |---|---|
@@ -49,6 +49,8 @@ watchMotionPrefs()
 | `motion.ts` | バネが `cubic-bezier` の近似のまま（それでも十分見られる） |
 | `loader.ts` | 読み込みの印の形が変わらない（回るだけ） |
 | `overlay.ts` | メニュー・候補が画面中央に出る（Popover API の既定位置） |
+| `ptr.ts` | 引いて更新が効かない（CSS は器だけ。指を拾うのは JS） |
+| `flight.ts` / `sortable.ts` | 共有要素で飛ばない / 並べ替えられない |
 
 配色・形・字・間隔は CSS だけで全部効く。
 開閉そのもの（外側を押して閉じる・Esc）は `popover` 属性と `<details>` が持つので、
@@ -119,14 +121,22 @@ applySeed('teal')
 | `styles/m3-scheme.css` | **生成物。** `--md-sys-color-*`（7シード × ライト/ダーク） |
 | `styles/tokens.css` | 短い別名（`--primary` `--surface-mid` …）+ 形・字・間隔・動き・外殻の幾何・画面幅・z-index・図の系列色 |
 | `styles/base.css` | reset。「Webページの顔」（長押しメニュー・青い選択範囲・タップの点滅）を消す |
-| `styles/components.css` | **入口。** 下の5本を束ねるだけ |
+| `styles/components.css` | **入口。** `base` と下の9本を順に束ねる（★順番を変えない★） |
 | `styles/components-core.css` | 骨組み・バー・ボタン・入力・選択・面と行・知らせ・進捗・シート・ダイアログ |
 | `styles/components-nav.css` | レール・ドロワー・ボトムアプリバー・サイドシート・パンくず・ページ送り・タブの追加種 |
 | `styles/components-overlay.css` | メニュー・ポップオーバー・ツールチップ・開閉・コマンドパレット・全画面の検索 |
 | `styles/components-form.css` | コンボボックス・日付/時刻・OTP・トグル・分割ボタン・FABメニュー・ドロップ領域・評価 |
 | `styles/components-data.css` | アバター・表・カルーセル・木・手順・年表・環の進捗・図・本文・コード |
+| `styles/components-chat.css` | 会話（吹き出し・入力帯・ストリーミング） |
+| `styles/components-media.css` | 写真と動画（グリッド・全画面ビューア・共有要素） |
+| `styles/components-extra.css` | ログイン画面・ドラッグ並べ替え・予定表 |
+| `styles/print.css` | 紙とPDF。**★必ず最後。外さない★** |
 | `lib/motion.ts` | M3 のバネを `linear()` に焼く。速度追跡・中断可能な動き・ラバーバンド・ハプティクス |
 | `lib/loader.ts` | 7つの多角形を補間する読み込みの印 |
+| `lib/ptr.ts` | 引いて更新。印だけがバーの下から降りてくる |
+| `lib/flight.ts` | 共有要素で飛ぶ（一覧 → 全画面） |
+| `lib/sortable.ts` | ドラッグで並べ替える（HTML5 の DnD は使わない） |
+| `lib/icons.ts` | **生成物。** Lucide から焼いたアイコン |
 | `lib/press.ts` | `pointerdown` で `.is-pressed` を付ける（委譲。document に1つ） |
 | `lib/overlay.ts` | メニュー・候補の位置決め、コンテキストメニュー、↑↓ の操作、ツールチップ |
 | `lib/theme.ts` | 明暗とシードの適用・保存・`theme-color` の追従 |

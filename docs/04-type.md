@@ -108,6 +108,40 @@ label-l 14px の和文3文字 ＝ 42px + padding 8×2 = 58px  → 収まる
 
 ---
 
+## 文字を選ばせる（`.selectable`）
+
+`base.css` は body 全体に `user-select: none` を掛けてある。長押しで青い選択範囲が
+出るのは「これはWebページだ」と一発で割れる挙動なので、既定では切ってある。
+
+**その代わり、コピーされる価値のある文字には `.selectable` を付ける。**
+付け忘れると、長押ししても何も起きない文字になる（しかも見た目は正しいので
+気づかない）。
+
+```html
+<span class="selectable">〒060-0001 札幌市中央区北1条西2丁目</span>
+<span class="selectable">注文番号 A1B2-C3D4-E5F6</span>
+```
+
+すでに戻してあるので**付けなくてよい**もの:
+
+| 何 | 戻している場所 |
+|---|---|
+| `input` `textarea` `.input` `.textarea` | base.css |
+| `.mono` `code` `pre` | base.css |
+| `.code`（コード欄）・`.prose`（markdown の本文） | components-data.css |
+| `.msg__bubble`（吹き出しの中）・`.composer__input` | components-chat.css |
+| 紙に刷るとき（全部） | print.css |
+
+付けるのはこの外側にある「読ませるために置いた文字」。
+住所・電話番号・注文番号・エラーの詳細・パス・型番・
+`.row__title` に入れた固有名詞など。
+
+**★クラス名だけで戻さない★** base.css の定義は要素セレクタ（`input` /
+`textarea` / `code` / `pre`）と**併記**してある。クラス名だけにすると、端末に
+よっては入力欄の中の選択やキャレット移動まで巻き添えで死ぬ。
+
+---
+
 ## 入力欄は 16px を下回らせない
 
 ```css

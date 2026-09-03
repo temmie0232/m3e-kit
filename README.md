@@ -33,13 +33,13 @@ UI は Material 3 Expressive で作る。仕様書とコピー元一式が
 
 ```
 AGENTS.md          ★AI の入口★ 読む順・絶対規則・既定値
-docs/              説明書（19章）
+docs/              説明書（22章）
 starter/           そのままコピーして使う実体
   styles/
     m3-scheme.css      生成物。--md-sys-color-*（7シード × ライト/ダーク）
     tokens.css         短い別名 + 形・字・間隔・動き・外殻の幾何・画面幅
     base.css           reset と「Webページの顔」を消す設定
-    components.css     ★入口★ 下の5本を束ねるだけ
+    components.css     ★入口★ base と下の9本を順に束ねる（★順番を変えない★）
     components-core    骨組み・バー・ボタン・入力・選択・面と行・知らせ
     components-nav     レール・ドロワー・サイドシート・パンくず・ページ送り
     components-overlay メニュー・ポップオーバー・ツールチップ・開閉・⌘K
@@ -53,6 +53,7 @@ starter/           そのままコピーして使う実体
   lib/
     motion.ts        M3 のバネを linear() に焼く / 速度追跡 / 中断可能な動き
     loader.ts        形が変わる読み込みの印
+    ptr.ts           引いて更新（印だけがバーの下から降りてくる）
     press.ts         pointerdown で .is-pressed（押下の即時反応）
     overlay.ts       メニュー・候補の位置決めと ↑↓ の操作
     flight.ts        共有要素で飛ぶ（一覧 → 全画面）
@@ -64,7 +65,7 @@ starter/           そのままコピーして使う実体
     gen-icons.mjs      Lucide から使うアイコンだけ焼く
 demo/              ★部品図鑑★ 全部品が実際に動き、HTML をコピーできる
   index.html         図鑑の枠組み
-  catalog.js         80 部品のデータ（html はここに1度だけ書く）
+  catalog.js         82 部品のデータ（html はここに1度だけ書く）
   site.js            索引・検索・プレビュー（iframe）・コード表示
   site.css / icons.js
 ```
@@ -81,7 +82,7 @@ demo/              ★部品図鑑★ 全部品が実際に動き、HTML をコ�
 | [06 高さ](docs/06-elevation.md) | 面の5段、影を敷いてよい条件 |
 | [07 動き](docs/07-motion.md) | バネ、共有要素、読み込みの印、視差低減 |
 | [08 外殻](docs/08-layout.md) | バー、z-index、Safe Area |
-| [09 部品カタログ](docs/09-components.md) | **80 部品**の一覧表 + HTML + 契約 |
+| [09 部品カタログ](docs/09-components.md) | **82 部品**の一覧表 + HTML + 契約 |
 | [10 新しい部品の作り方](docs/10-new-component.md) | **カタログに無いものを導出する9問** |
 | [11 状態](docs/11-states.md) | 読み込み中・空・エラー・楽観的更新 |
 | [12 ジェスチャー](docs/12-gestures.md) | 1:1 追従、ラバーバンド、ハプティクス |
@@ -107,7 +108,7 @@ npm run demo    # → http://localhost:8080/demo/
 ★リポジトリのルートから配ること★ 図鑑は `../starter/styles/` を相対パスで読む
 （`demo/` を配信ルートにすると 404 になる）。
 
-- 左の索引で 80 部品を探す。`⌘K` で検索へ。
+- 左の索引で 82 部品を探す。`⌘K` で検索へ。
   日本語名・英語名・**shadcn の名前**・別名のどれでも引ける
 - プレビューは **iframe**。幅を **360 / 720 / 1100** に切り替えられるので、
   PC のブラウザのまま「携帯で崩れるか」と適応レイアウトを確認できる

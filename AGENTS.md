@@ -52,13 +52,20 @@ components.css       入口。★import するのはこれだけ★
 │                    コマンドパレット・全画面の検索・ダイアログの追加種
 ├ components-form    コンボボックス・日付/時刻・OTP・トグル・分割ボタン・
 │                    FABメニュー・ドロップ領域・評価・色見本
-└ components-data    アバター・表・カルーセル・木・手順・年表・環の進捗・
-                     図・本文（markdown）・コード
+├ components-data    アバター・表・カルーセル・木・手順・年表・環の進捗・
+│                    図・本文（markdown）・コード
+├ components-chat    会話（吹き出し・入力帯・ストリーミング）
+├ components-media   写真と動画（グリッド・全画面ビューア・共有要素）
+├ components-extra   ログイン画面・ドラッグ並べ替え・予定表
+└ print.css          紙とPDF（★必ず最後★ 外さない）
 ```
+
+★この順番を変えないこと★ 後ろのファイルが前を上書きする前提で書いてある。
 
 CSS だけでも成立する。`lib/` を入れないと失われるのは
 「押した瞬間の反応」「本物のバネ」「形が変わる読み込みの印」
-「メニューの位置決め」の4つで、配色・形・字・間隔は CSS だけで全部効く。
+「メニューの位置決め」「引いて更新」の5つで、
+配色・形・字・間隔は CSS だけで全部効く。
 
 **PC・タブレットでも使うアプリ**なら `.app` に `.app--adaptive` を付ける。
 画面幅でナビゲーションが自動で切り替わる（→ [15-adaptive](docs/15-adaptive.md)）。
@@ -88,6 +95,7 @@ React でもプレーンな HTML でも Vue でも同じ。`docs/09-components.m
 | ✅ | 兄弟の間隔は `gap`。個別の `margin` を足さない |
 | ✅ | 札（ボタン・チップ・タブ・区画）は `white-space: nowrap` |
 | ✅ | タップ要素は 48×48 以上。見た目が小さいものは `::after` で判定だけ広げる |
+| ✅ | コピーさせたい文字には `.selectable`。`base.css` が全体の選択を切っている |
 
 ---
 
@@ -98,12 +106,12 @@ React でもプレーンな HTML でも Vue でも同じ。`docs/09-components.m
 | [01-principles](docs/01-principles.md) | **必ず。** 5つの原則とやらないことリスト |
 | [02-color](docs/02-color.md) | 色を選ぶとき。役割 → 使い場所の対応表 |
 | [03-shape](docs/03-shape.md) | 角丸を決めるとき。shape morph の作法 |
-| [04-type](docs/04-type.md) | 文字の大きさを決めるとき。**和文の折り返しの罠** |
+| [04-type](docs/04-type.md) | 文字の大きさを決めるとき。**和文の折り返しの罠**・`.selectable` |
 | [05-space](docs/05-space.md) | 余白を決めるとき。**gap と margin の足し算事故** |
 | [06-elevation](docs/06-elevation.md) | 面を重ねるとき。影を敷いてよい条件 |
 | [07-motion](docs/07-motion.md) | 動かすとき。バネ・共有要素・視差低減 |
 | [08-layout](docs/08-layout.md) | 画面の外殻を組むとき。バー・z-index・スクロール |
-| [09-components](docs/09-components.md) | **部品カタログ（80 部品）。** 一覧表 + HTML |
+| [09-components](docs/09-components.md) | **部品カタログ（82 部品）。** 一覧表 + HTML |
 | [10-new-component](docs/10-new-component.md) | **カタログに無いものを作るとき。必ず読む** |
 | [11-states](docs/11-states.md) | 読み込み中・空・エラー・楽観的更新 |
 | [12-gestures](docs/12-gestures.md) | 指で触るものを作るとき。ハプティクス |
@@ -136,7 +144,7 @@ React でもプレーンな HTML でも Vue でも同じ。`docs/09-components.m
 | 一覧 → 詳細 | 同じ画面内で開けるならボトムシート。階層が変わるなら画面遷移 |
 | 「その他の操作」 | 携帯はボトムシート、PC はメニュー（`.menu`）。**携帯でメニューを出さない** |
 | 一覧の見せ方 | 携帯は `.rowlist`、expanded 幅から `.table`。**携帯で表を使わない** |
-| 一覧の追加読み込み | 無限スクロール + 引いて更新。ページ送りは表と検索結果だけ |
+| 一覧の追加読み込み | 無限スクロール + 引いて更新（`.ptr` + `lib/ptr.ts`）。ページ送りは表と検索結果だけ |
 | 開閉するもの | `<details>` + `.accordion`。div と JS で作り直さない |
 | メニュー・ポップオーバーの出し入れ | `popover` 属性（Popover API）。自前の外側クリック検出を書かない |
 | アイコン | Lucide（焼き込み済み）。自分で path を書かない。`aria-label` を必ず付ける |
@@ -148,7 +156,7 @@ React でもプレーンな HTML でも Vue でも同じ。`docs/09-components.m
 
 ## 5. 見た目を確認する
 
-`demo/` が**部品図鑑**。80 部品が実際に動き、HTML をそのままコピーできる。
+`demo/` が**部品図鑑**。82 部品が実際に動き、HTML をそのままコピーできる。
 
 ```
 npm run demo   →  http://localhost:8080/demo/

@@ -61,7 +61,9 @@ AI アプリでもメッセージアプリでも、要るものは同じ。
 - **★時刻・既読は吹き出しの外★** 中に入れると、短い返事のときに
   本文より時刻のほうが幅を決めてしまう
 - **★吹き出しの中は `user-select: text` に戻す★** `base.css` で切ってあるが、
-  会話の中身はコピーされるためにある
+  会話の中身はコピーされるためにある。`.msg__bubble` は
+  `components-chat.css` が戻してあるので `.selectable` は要らない
+  （→ [04-type](04-type.md#文字を選ばせるselectable)）
 - 長い URL や ID で横に溢れないよう `overflow-wrap: anywhere`
 
 ### 発話に付ける操作

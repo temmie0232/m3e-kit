@@ -11,7 +11,7 @@ JS が要るところだけ「**JS**」と注記してある。
 
 ---
 
-## 一覧（80 部品）
+## 一覧（82 部品）
 
 | 分類 | 部品 | クラス | ファイル |
 |---|---|---|---|
@@ -78,6 +78,7 @@ JS が要るところだけ「**JS**」と注記してある。
 | 進み具合 | 線の進捗 | `.meter` | core |
 | | 環の進捗 | `.ring` | data |
 | | 読み込みの印 | `.loader` | core |
+| | 引いて更新 | `.ptr` + **JS** | core |
 | | 手順 | `.steps` | data |
 | | 年表 | `.timeline` | data |
 | 会話 | チャット（吹き出し） | `.chat` `.msg` | chat |
@@ -87,7 +88,8 @@ JS が要るところだけ「**JS**」と注記してある。
 | | 動画の操作 | `.player` | media |
 | 残りもの | ログイン画面 | `.login` | extra |
 | | ドラッグ並べ替え | `.sortable` | extra |
-| | 予定表（日 / 週） | `.agenda` `.week` | extra |
+| | 予定表（日） | `.agenda` | extra |
+| | 予定表（週） | `.week` | extra |
 | | 印刷 | `@media print` | print |
 | 文字 | アイコン | `.icon` + Lucide | icons |
 | | アバター | `.avatar` | data |
@@ -653,6 +655,39 @@ M3 list item / 1行 56 / 2行 72 / 区切りは outline-variant 1px を 16 イ�
 
 ---
 
+# 引いて更新
+
+
+**`.app` の直下に置く**（`.main` の中ではない）。`position: absolute` で
+バーの真下に構え、印だけがバーの下から降りてくる。
+
+```html
+<div class="ptr">
+  <div class="loader-chip">
+    <svg class="loader" viewBox="0 0 100 100"><path class="loader__shape"></path></svg>
+  </div>
+</div>
+```
+
+```ts
+import { attachPullToRefresh } from './lib/ptr'
+
+attachPullToRefresh(document.querySelector('.main'), document.querySelector('.ptr'), async () => {
+  await reload()   // Promise が解決するまで印が回り続ける
+})
+```
+
+- **★一覧ごと下げない★** 離した瞬間に中身が跳ねて「どこを読んでいたか」が消える。
+  動くのは印だけ
+- **★`.loader--on` は回り始めてから付ける★** 引いている間は回さない。
+  形の進み具合だけが指に付いてくる（`loader.setProgress()`）
+- 印が隠れている位置は `.ptr .loader-chip` の `margin-top: -56px`。
+  `lib/ptr.ts` の `HIDDEN` と**対**なので、片方だけ変えない
+- しきい値に到達した**瞬間だけ** `haptic('light')`。引いている間は鳴らさない
+- → [12-gestures](12-gestures.md#引いて更新)
+
+---
+
 # 会話 / 写真と動画 / 残りもの
 
 → [20-chat](20-chat.md)（吹き出し・入力帯・ストリーミング）
@@ -660,8 +695,19 @@ M3 list item / 1行 56 / 2行 72 / 区切りは outline-variant 1px を 16 イ�
 → [22-icons](22-icons.md)（Lucide の焼き込み方と規約）
 
 ログイン画面（`.login`）・ドラッグ並べ替え（`.sortable` + `lib/sortable.ts`）・
-予定表（`.agenda` / `.week`）・印刷（`print.css`）は
-`components-extra.css` と `print.css`。図鑑で見るのがいちばん早い。
+予定表・印刷（`print.css`）は `components-extra.css` と `print.css`。
+図鑑で見るのがいちばん早い。
+
+**予定表は幅で使い分ける。** 携帯（〜599）は日ごとの一覧 `.agenda`、
+600 以上は週の時間割 `.week`。月のマス目は作らない（携帯で読めない）。
+
+- `.week` は `48px repeat(7, minmax(0,1fr))` の格子。1行 = 1時間（44px）
+- 予定の箱 `.week__ev` の上端と高さは **JS が `--top` / `--h`（px）で渡す**。
+  CSS に時刻の知識を持たせない
+- **★いまの時刻の線 `.week__now` は、今日の列の `.week__cell` の中に置く★**
+  `.week` 自身は `position` を持たないので、外に置くと基準が `.app` になって
+  画面ごと突き抜ける
+- 種類の色は `--accent`（既定 `--primary`）。`.agenda__item` と同じ作法
 
 ---
 
@@ -686,4 +732,8 @@ M3 list item / 1行 56 / 2行 72 / 区切りは outline-variant 1px を 16 イ�
 ```
 
 - `.prose` の中**だけ**は要素セレクタで書く（生成された HTML にクラスを付けられないため）
+- **コピーさせたい文字には `.selectable`。** `base.css` が画面全体の選択を切って
+  あるので、住所・注文番号・エラーの詳細などは付けないと長押しても選べない
+  （`.mono` / `.code` / `.prose` / 吹き出しの中は戻してあるので不要）
+  → [04-type](04-type.md#文字を選ばせるselectable)
 - 図の色は `--series-1`〜`5`。**★4系列を超えたら色で分けるのを諦める★** → [18-data](18-data.md)

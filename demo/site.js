@@ -103,6 +103,66 @@ function attachPress(d) {
     d.addEventListener(type, release, { passive: true, capture: true })
 }
 
+/* 読み込みの印の7つの形。lib/loader.ts の移植（極座標 → 3次ベジェ）。
+   ★全部の形で点の数を同じにすること★ そうでないと d が補間できない */
+function loaderPaths() {
+  const N = 48
+  const R = 33
+  const ell = (a, b, t) => {
+    const c = b * Math.cos(t)
+    const s = a * Math.sin(t)
+    return (a * b) / Math.sqrt(c * c + s * s)
+  }
+  const SHAPES = [
+    (t) => 1 + 0.16 * Math.cos(10 * t),
+    (t) => 1 + 0.09 * Math.cos(9 * t),
+    (t) => 1 + 0.1 * Math.cos(5 * t),
+    (t) => ell(1.22, 0.7, t),
+    (t) => 1 + 0.18 * Math.cos(8 * t),
+    (t) => 1 + 0.14 * Math.cos(4 * t),
+    (t) => ell(1.1, 0.86, t - Math.PI / 4),
+  ]
+  const toPath = (r) => {
+    const pts = []
+    for (let i = 0; i < N; i++) {
+      const t = (i / N) * Math.PI * 2
+      const rr = R * r(t)
+      pts.push([50 + rr * Math.cos(t), 50 + rr * Math.sin(t)])
+    }
+    const at = (i) => pts[((i % N) + N) % N]
+    const f = (v) => v.toFixed(2)
+    let s = `M${f(pts[0][0])} ${f(pts[0][1])}`
+    for (let i = 0; i < N; i++) {
+      const [p0, p1, p2, p3] = [at(i - 1), at(i), at(i + 1), at(i + 2)]
+      s += `C${f(p1[0] + (p2[0] - p0[0]) / 6)} ${f(p1[1] + (p2[1] - p0[1]) / 6)} ${f(
+        p2[0] - (p3[0] - p1[0]) / 6,
+      )} ${f(p2[1] - (p3[1] - p1[1]) / 6)} ${f(p2[0])} ${f(p2[1])}`
+    }
+    return s + 'Z'
+  }
+  return SHAPES.map(toPath)
+}
+
+/** path に形の変化を取り付ける。play=false で「引いた量で進める」用に止めておく */
+function spinShape(path, paths, play) {
+  path.setAttribute('d', paths[0])
+  try {
+    const a = path.animate(
+      [...paths, paths[0]].map((s, i) => ({
+        d: `path("${s}")`,
+        offset: i / paths.length,
+        easing: 'cubic-bezier(0.4, 0, 0.2, 1)',
+      })),
+      { duration: 650 * paths.length, iterations: Infinity },
+    )
+    if (!play) a.pause()
+    return a
+  } catch {
+    /* d の補間ができない環境では最初の形のまま回る */
+    return null
+  }
+}
+
 /* ============================================================
    entry.init に渡す道具箱。starter/lib/*.ts の素の JS 版
    ============================================================ */
@@ -366,56 +426,130 @@ const U = {
 
   /** 読み込みの印。lib/loader.ts の移植（極座標 → 3次ベジェ → d の補間） */
   loader(d) {
-    const N = 48
-    const R = 33
-    const ell = (a, b, t) => {
-      const c = b * Math.cos(t)
-      const s = a * Math.sin(t)
-      return (a * b) / Math.sqrt(c * c + s * s)
+    const paths = loaderPaths()
+    for (const p of d.querySelectorAll('.loader__shape')) spinShape(p, paths, true)
+  },
+
+  /** 引いて更新。lib/ptr.ts の素の JS 版（★動くのは印だけ。一覧は動かさない★） */
+  ptr(d, scroller, ptrEl, onRefresh) {
+    const chip = ptrEl.querySelector('.loader-chip')
+    const svg = ptrEl.querySelector('.loader')
+    const shape = ptrEl.querySelector('.loader__shape')
+    if (!chip || !svg || !shape) return
+    /* ★.ptr .loader-chip の margin-top: -56px と対★ */
+    const HIDDEN = 56
+    const REST = 72
+    const MAX = 112
+    const RUBBER_D = 240
+    const EASE = 'cubic-bezier(0.25,1.05,0.35,1)'
+    const anim = spinShape(shape, loaderPaths(), false)
+
+    /* ラバーバンド。lib/motion.ts の rubber() と同じ式 */
+    const rubber = (x, dim, c = 0.55) => (x * dim * c) / (dim + c * x)
+
+    let startY = 0
+    let travel = 0
+    let pulling = false
+    let armed = false
+    let busy = false
+
+    const paint = (y) => {
+      chip.style.transform = `translateY(${y.toFixed(1)}px)`
+      chip.style.opacity = String(Math.min(1, y / HIDDEN))
     }
-    const SHAPES = [
-      (t) => 1 + 0.16 * Math.cos(10 * t),
-      (t) => 1 + 0.09 * Math.cos(9 * t),
-      (t) => 1 + 0.1 * Math.cos(5 * t),
-      (t) => ell(1.22, 0.7, t),
-      (t) => 1 + 0.18 * Math.cos(8 * t),
-      (t) => 1 + 0.14 * Math.cos(4 * t),
-      (t) => ell(1.1, 0.86, t - Math.PI / 4),
-    ]
-    const toPath = (r) => {
-      const pts = []
-      for (let i = 0; i < N; i++) {
-        const t = (i / N) * Math.PI * 2
-        const rr = R * r(t)
-        pts.push([50 + rr * Math.cos(t), 50 + rr * Math.sin(t)])
-      }
-      const at = (i) => pts[((i % N) + N) % N]
-      const f = (v) => v.toFixed(2)
-      let s = `M${f(pts[0][0])} ${f(pts[0][1])}`
-      for (let i = 0; i < N; i++) {
-        const [p0, p1, p2, p3] = [at(i - 1), at(i), at(i + 1), at(i + 2)]
-        s += `C${f(p1[0] + (p2[0] - p0[0]) / 6)} ${f(p1[1] + (p2[1] - p0[1]) / 6)} ${f(
-          p2[0] - (p3[0] - p1[0]) / 6,
-        )} ${f(p2[1] - (p3[1] - p1[1]) / 6)} ${f(p2[0])} ${f(p2[1])}`
-      }
-      return s + 'Z'
+    const clear = () => {
+      chip.style.transform = ''
+      chip.style.opacity = ''
     }
-    const paths = SHAPES.map(toPath)
-    for (const p of d.querySelectorAll('.loader__shape')) {
-      p.setAttribute('d', paths[0])
-      try {
-        p.animate(
-          [...paths, paths[0]].map((s, i) => ({
-            d: `path("${s}")`,
-            offset: i / paths.length,
-            easing: 'cubic-bezier(0.4, 0, 0.2, 1)',
-          })),
-          { duration: 650 * paths.length, iterations: Infinity },
-        )
-      } catch {
-        /* d の補間ができない環境では最初の形のまま回る */
-      }
+    /* 先に最終値をインラインへ確定させ、開始値からそこへ流す
+       （lib/motion.ts の springSettle と同じ手。fill: forwards を使わない） */
+    const settle = (from, to, opacity) => {
+      const a0 = String(Math.min(1, from / HIDDEN))
+      paint(to)
+      chip.style.opacity = opacity
+      return chip.animate(
+        [{ transform: `translateY(${from}px)`, opacity: a0 }, {}],
+        { duration: 500, easing: EASE, fill: 'backwards' },
+      ).finished
     }
+
+    scroller.addEventListener(
+      'pointerdown',
+      (e) => {
+        if (busy || pulling || e.button !== 0 || scroller.scrollTop > 0) return
+        startY = e.clientY
+        travel = 0
+        armed = false
+        pulling = true
+      },
+      { passive: true },
+    )
+
+    scroller.addEventListener(
+      'pointermove',
+      (e) => {
+        if (!pulling) return
+        const dy = e.clientY - startY
+        /* 上へ動いた = これはスクロール。手を引いてブラウザに返す */
+        if (dy <= 0) {
+          if (travel > 0) clear()
+          travel = 0
+          pulling = false
+          return
+        }
+        /* ★しきい値までは 1:1。抵抗は越えた先にだけ掛ける★ */
+        travel = Math.min(MAX, dy <= REST ? dy : REST + rubber(dy - REST, RUBBER_D))
+        paint(travel)
+        /* 引いた量で形の再生位置を進める。引き切るまでに形が2つ進む */
+        if (anim && anim.playState !== 'running')
+          anim.currentTime = Math.min(1, travel / REST) * 650 * 2
+        const next = travel >= REST
+        if (next !== armed) {
+          armed = next
+          if (armed) d.defaultView.navigator.vibrate?.(10)
+        }
+      },
+      { passive: true },
+    )
+
+    /* ★引いている最中だけスクロールを止める★ Pointer Events の
+       preventDefault では止まらないので、touchmove を非 passive で拾う */
+    scroller.addEventListener(
+      'touchmove',
+      (e) => {
+        if (pulling && travel > 0 && e.cancelable) e.preventDefault()
+      },
+      { passive: false },
+    )
+
+    const up = () => {
+      if (!pulling) return
+      pulling = false
+      const from = travel
+      travel = 0
+      if (!armed) {
+        if (from > 0) settle(from, 0, '0').then(clear, clear)
+        return
+      }
+      armed = false
+      busy = true
+      d.defaultView.navigator.vibrate?.(18)
+      svg.classList.add('loader--on')
+      anim?.play()
+      settle(from, REST, '1')
+      const done = () => {
+        svg.classList.remove('loader--on')
+        if (anim) {
+          anim.pause()
+          anim.currentTime = 0
+        }
+        busy = false
+        settle(REST, 0, '0').then(clear, clear)
+      }
+      Promise.resolve(onRefresh()).then(done, done)
+    }
+    for (const t of ['pointerup', 'pointercancel', 'pointerleave'])
+      scroller.addEventListener(t, up, { passive: true })
   },
 }
 

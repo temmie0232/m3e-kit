@@ -2013,6 +2013,72 @@ export const CATALOG = [
   },
 
   {
+    id: 'ptr',
+    name: '引いて更新',
+    m3: 'Pull to refresh',
+    group: '進み具合',
+    file: 'core',
+    doc: '12-gestures',
+    tags: 'ptr pull to refresh swipe refresh reload 引いて更新 更新 リロード 下に引く',
+    note: '★一覧を掴んで下へ引く（マウスでもできる）★ 動くのは印だけで、一覧は動かない。引いた量で印の形が進み、しきい値を越えて離すと回り始める。',
+    contracts: [
+      '一覧ごと下げない。離した瞬間に中身が跳ねて「どこを読んでいたか」が消える',
+      '印は z-index をバーより下（--z-float）にして、バーの下から出てくるように見せる',
+      '.loader-chip の margin-top: -56px が「隠れている位置」。JS の HIDDEN と対',
+      'しきい値に到達した瞬間だけ haptic を鳴らす。引いている間は鳴らさない',
+    ],
+    frame: 'app',
+    w: 360,
+    h: 420,
+    html: `<header class="appbar">
+  <div class="appbar__side"></div>
+  <h1 class="appbar__title">受信箱</h1>
+  <div class="appbar__side"></div>
+</header>
+
+<div class="ptr">
+  <div class="loader-chip">
+    <svg class="loader" viewBox="0 0 100 100"><path class="loader__shape"></path></svg>
+  </div>
+</div>
+
+<main class="main main--padded">
+  <div class="rowlist">
+    <div class="row"><div class="row__main"><span class="row__title">請求の確認</span>
+      <span class="row__sub">10:24</span></div></div>
+    <div class="row"><div class="row__main"><span class="row__title">配送のお知らせ</span>
+      <span class="row__sub">09:41</span></div></div>
+    <div class="row"><div class="row__main"><span class="row__title">週次のまとめ</span>
+      <span class="row__sub">昨日</span></div></div>
+    <div class="row"><div class="row__main"><span class="row__title">パスワードの変更</span>
+      <span class="row__sub">昨日</span></div></div>
+    <div class="row"><div class="row__main"><span class="row__title">領収書</span>
+      <span class="row__sub">9月1日</span></div></div>
+    <div class="row"><div class="row__main"><span class="row__title">ようこそ</span>
+      <span class="row__sub">8月30日</span></div></div>
+  </div>
+</main>`,
+    init(d, u) {
+      let n = 0
+      u.ptr(d, u.$('.main', d), u.$('.ptr', d), () => {
+        /* 実際のアプリではここが fetch。Promise が解決するまで印が回る */
+        return new Promise((ok) =>
+          d.defaultView.setTimeout(() => {
+            const list = u.$('.rowlist', d)
+            const row = d.createElement('div')
+            row.className = 'row'
+            row.innerHTML =
+              `<div class="row__main"><span class="row__title">新しい知らせ ${++n}</span>` +
+              `<span class="row__sub">たった今</span></div>`
+            list.prepend(row)
+            ok()
+          }, 1200),
+        )
+      })
+    },
+  },
+
+  {
     id: 'steps',
     name: '手順',
     m3: '（M3 に無い / Stepper）',
@@ -2345,13 +2411,13 @@ export const CATALOG = [
 
   {
     id: 'agenda',
-    name: '予定表',
+    name: '予定表（日）',
     m3: '（M3 に無い）',
     group: '残りもの',
     file: 'extra',
     doc: '09-components',
     tags: 'agenda schedule calendar event week 予定 日程 週',
-    note: '日付を**選ぶ**のは `.cal`、予定を**見る**のはこちら。携帯は日ごとの一覧（.agenda）、広い画面では週の時間割（.week）。',
+    note: '日付を**選ぶ**のは `.cal`、予定を**見る**のはこちら。携帯はこの日ごとの一覧、広い画面では週の時間割（→ `.week`）。',
     contracts: [
       '月のマス目に予定を詰め込まない。携帯では読めない',
       '予定が無い日も行ごと消さない。消すと日付が飛んで「その日が存在しない」ように見える',
@@ -2386,6 +2452,84 @@ export const CATALOG = [
       </button>
     </div>
   </div>
+</div>`,
+  },
+
+  {
+    id: 'week',
+    name: '予定表（週）',
+    m3: '（M3 に無い）',
+    group: '残りもの',
+    file: 'extra',
+    doc: '09-components',
+    tags: 'week timetable calendar schedule grid 週 時間割 予定表 カレンダー',
+    note: '★720 以上で使う部品★ 左の時刻の列 + 7日の格子。携帯（〜599）では列が細すぎて読めないので `.agenda` に切り替える。',
+    contracts: [
+      '携帯で出さない。日ごとの一覧（.agenda）に切り替える',
+      '.week__ev の上端と高さは JS が --top / --h（px）で渡す。CSS に時刻の知識を持たせない',
+      'いまの時刻の線（.week__now）は今日の列の .week__cell の中に置く（.week 自身は position を持たないので、外に置くと画面ごと突き抜ける）',
+      '左端の時刻は「行の頭」ではなく「線」。translateY(-0.5em) で境目に合わせてある',
+    ],
+    w: 720,
+    h: 340,
+    html: `<div class="week">
+  <div class="week__head"></div>
+  <div class="week__head">月</div>
+  <div class="week__head">火</div>
+  <div class="week__head week__head--today">水</div>
+  <div class="week__head">木</div>
+  <div class="week__head">金</div>
+  <div class="week__head">土</div>
+  <div class="week__head">日</div>
+
+  <div class="week__hour">8</div>
+  <div class="week__cell"></div>
+  <div class="week__cell"></div>
+  <div class="week__cell"></div>
+  <div class="week__cell"><div class="week__ev" style="--top:0px; --h:88px">資料づくり</div></div>
+  <div class="week__cell"></div>
+  <div class="week__cell"></div>
+  <div class="week__cell"></div>
+
+  <div class="week__hour">9</div>
+  <div class="week__cell"></div>
+  <div class="week__cell"><div class="week__ev" style="--top:0px; --h:66px">定例</div></div>
+  <div class="week__cell">
+    <div class="week__ev" style="--top:22px; --h:44px; --accent:var(--tertiary)">1on1</div>
+  </div>
+  <div class="week__cell"></div>
+  <div class="week__cell"></div>
+  <div class="week__cell"></div>
+  <div class="week__cell"></div>
+
+  <div class="week__hour">10</div>
+  <div class="week__cell"></div>
+  <div class="week__cell"></div>
+  <div class="week__cell"><div class="week__now" style="--top:26px"></div></div>
+  <div class="week__cell"></div>
+  <div class="week__cell"></div>
+  <div class="week__cell"></div>
+  <div class="week__cell"></div>
+
+  <div class="week__hour">11</div>
+  <div class="week__cell"></div>
+  <div class="week__cell"></div>
+  <div class="week__cell"></div>
+  <div class="week__cell"></div>
+  <div class="week__cell">
+    <div class="week__ev" style="--top:0px; --h:44px; --accent:var(--error)">歯医者</div>
+  </div>
+  <div class="week__cell"></div>
+  <div class="week__cell"></div>
+
+  <div class="week__hour">12</div>
+  <div class="week__cell"></div>
+  <div class="week__cell"></div>
+  <div class="week__cell"><div class="week__ev" style="--top:0px; --h:44px">昼</div></div>
+  <div class="week__cell"></div>
+  <div class="week__cell"></div>
+  <div class="week__cell"></div>
+  <div class="week__cell"></div>
 </div>`,
   },
 
@@ -2479,8 +2623,8 @@ export const CATALOG = [
     group: '文字',
     file: 'data',
     doc: '04-type',
-    tags: 'prose typography markdown article 本文 記事',
-    note: 'AI の返答・README・記事など、こちらが構造を決められない HTML 用。長押しでコピーできる（base.css の user-select: none を戻してある）。',
+    tags: 'prose typography markdown article selectable 本文 記事 コピー 選択',
+    note: 'AI の返答・README・記事など、こちらが構造を決められない HTML 用。長押しでコピーできる（base.css の user-select: none を戻してある）。この外側の文字を選ばせたいときは `.selectable` を付ける。',
     contracts: [
       '.prose の中だけは要素セレクタで書く。生成された HTML にクラスを付けられないので、ここだけ例外',
       '引用は左の線1本だけ。地を塗るとカードに見えて、引用か自分の言葉か分からなくなる',
