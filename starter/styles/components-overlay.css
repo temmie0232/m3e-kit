@@ -56,6 +56,36 @@
   transform-origin: var(--menu-origin, top left);
 }
 
+/* ★出入りに動きを付ける★ Popover API は display を切り替えるので、
+   allow-discrete と @starting-style が無いと「パッと出てパッと消える」になり、
+   そこだけ 10 年前の画面に見える。
+   ★位置決めは offsetWidth/offsetHeight で測ること★ scale が乗っている
+   最中に getBoundingClientRect で測ると、縮んだ寸法で置き場所を計算して
+   着地位置がズレる（lib/overlay.ts の anchorTo はそう直してある） */
+@supports (transition-behavior: allow-discrete) {
+  .menu {
+    opacity: 0;
+    transform: scale(0.92);
+    transition:
+      opacity var(--d-effects-fast) var(--ease-effects),
+      transform var(--d-spatial-fast) var(--ease-spatial-fast),
+      overlay var(--d-spatial-fast) allow-discrete,
+      display var(--d-spatial-fast) allow-discrete;
+  }
+
+  .menu:popover-open {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  @starting-style {
+    .menu:popover-open {
+      opacity: 0;
+      transform: scale(0.92);
+    }
+  }
+}
+
 .menu__item {
   position: relative;
   display: flex;

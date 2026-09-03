@@ -45,7 +45,10 @@ export function anchorTo(el: HTMLElement, anchor: Element, opts: AnchorOpts = {}
   el.style.position = 'fixed'
   el.style.left = '0px'
   el.style.top = '0px'
-  const r = el.getBoundingClientRect()
+  /* ★offsetWidth/offsetHeight で測る★ 入場の scale が走っている最中に
+     getBoundingClientRect で測ると、縮んだ寸法で置き場所を計算してしまい、
+     着地位置が数 px ズレる。offset* は transform の影響を受けない */
+  const r = { width: el.offsetWidth, height: el.offsetHeight }
   const vw = window.innerWidth
   const vh = window.innerHeight
 

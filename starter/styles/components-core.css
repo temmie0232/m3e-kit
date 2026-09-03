@@ -672,10 +672,92 @@ body.no-bars {
   appearance: none;
   -webkit-appearance: none;
   padding-right: 40px;
+  /* 山形の形。base-select が使える環境では ::picker-icon の mask にも使い回す */
+  --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 4.5 6 8l3.5-3.5' fill='none' stroke='%23fff' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 4.5 6 8l3.5-3.5' fill='none' stroke='%23797986' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right var(--s-4) center;
   background-size: 14px 14px;
+}
+
+/* ★開いた一覧まで自前で描く★ ここまでやっても、押した瞬間に出るのは
+   OS が描く一覧で、そこだけテーマも形も効かない。いちばん古く見えるのがそれ。
+   appearance: base-select が入った環境では <select> の一覧が普通の要素になり、
+   .menu と同じ見た目にできる。入っていない環境は今までどおり OS の一覧が出る
+   （宣言ごと捨てられるだけなので壊れない） */
+@supports (appearance: base-select) {
+  .select {
+    appearance: base-select;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--s-3);
+    /* 山形は ::picker-icon が描くので、焼き込んだ data URI は下ろす。
+       これでテーマに追従する色になる */
+    background-image: none;
+    padding-right: var(--s-4);
+    text-align: left;
+  }
+
+  /* ★UA 既定の▼を出さない★ base-select にすると、せっかく差し替えた山形が
+     ブラウザの塗り潰し三角に戻る。同じ山形を mask で描き直す。
+     mask なら形だけを借りて色は background-color が決めるので、
+     data URI に灰色を焼き込まずに済む＝明暗のテーマに追従する */
+  .select::picker-icon {
+    width: 14px;
+    height: 14px;
+    color: transparent;
+    background-color: var(--on-surface-variant);
+    -webkit-mask: var(--select-chevron) center / 14px 14px no-repeat;
+    mask: var(--select-chevron) center / 14px 14px no-repeat;
+    transition: transform var(--d-spatial-fast) var(--ease-spatial-fast);
+  }
+
+  /* 開いている間は矢印を返す（.splitbtn と同じ作法） */
+  .select:open::picker-icon {
+    transform: rotate(180deg);
+  }
+
+  /* 一覧そのもの。.menu と同じ面・同じ影・同じ角にする */
+  .select::picker(select) {
+    appearance: base-select;
+    margin-block-start: var(--s-1);
+    padding: var(--s-1) 0;
+    max-height: min(60dvh, 480px);
+    overflow-y: auto;
+    border: 0;
+    border-radius: var(--shape-xs);
+    background: var(--surface-mid);
+    color: var(--on-surface);
+    box-shadow: var(--elev-2);
+  }
+
+  .select option {
+    display: flex;
+    align-items: center;
+    gap: var(--s-3);
+    min-height: 48px;
+    padding: 0 var(--s-3);
+    background: transparent;
+    color: inherit;
+    font-size: var(--t-label-l);
+    line-height: var(--lh-label-l);
+    font-weight: var(--w-medium);
+  }
+
+  /* キーボードで辿っている位置と hover を同じ見た目にする（.menu__item と同じ） */
+  .select option:hover,
+  .select option:focus {
+    background: var(--hover-on-surface);
+    outline: none;
+  }
+
+  /* 選択済みの印。★色だけで示さない★ */
+  .select option::checkmark {
+    order: 1;
+    margin-left: auto;
+    color: var(--primary);
+  }
 }
 
 .textarea {

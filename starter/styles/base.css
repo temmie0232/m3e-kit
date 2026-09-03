@@ -51,6 +51,20 @@ img {
   -webkit-user-drag: none;
 }
 
+/* ★OS 既定の太いスクロールバーを消す★ 灰色で立体的なつまみと、
+   その脇の溝は「Webページ」の顔そのもの。細くして地に溶かし、
+   つまみだけをテーマの色で置く。
+   ★scrollbar-color は継承するが scrollbar-width は継承しない★（実測）
+   なので色は :root に1度、太さは全要素に配る。
+   消したい部品は .chips / .carousel のように none で上書きする（クラスが勝つ） */
+:root {
+  scrollbar-color: var(--outline-variant) transparent;
+}
+
+* {
+  scrollbar-width: thin;
+}
+
 /* ★見出し・段落・一覧の既定 margin を落とす★
    このキットは「兄弟の間隔は gap で作る。個別 margin を書かない」という
    規約（docs/05-space.md）で組んであるのに、UA スタイルシートの <p> は

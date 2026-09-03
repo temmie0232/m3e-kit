@@ -419,7 +419,7 @@ export const CATALOG = [
     tags: 'split button dropdown 分割 保存 その他',
     note: '主な操作 +「ほかの選択肢」。向き合う側の角だけ角ばる。開いている間は矢印が返る。',
     contracts: ['右側の相手は必ずメニュー。ここに3つ目のボタンを足さない'],
-    h: 150,
+    h: 260,
     html: `<div class="splitbtn">
   <button class="btn btn--filled">保存</button>
   <button class="btn btn--filled" popovertarget="sm" aria-expanded="false" aria-label="ほかの保存">
@@ -812,7 +812,7 @@ export const CATALOG = [
       'background-color で書く（短縮形にすると、自前の山形がフォーカスのたびに消える）',
       '選択肢が 10 個を超えて探したくなるなら .combo に切り替える',
     ],
-    h: 180,
+    h: 300,
     html: `<div class="field">
   <label class="label" for="c1">費目</label>
   <select class="select" id="c1">

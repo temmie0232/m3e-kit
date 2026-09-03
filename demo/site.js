@@ -150,7 +150,9 @@ const U = {
     el.style.position = 'fixed'
     el.style.left = '0px'
     el.style.top = '0px'
-    const r = el.getBoundingClientRect()
+    /* ★offsetWidth/offsetHeight で測る★ 入場の scale の最中に
+       getBoundingClientRect で測ると縮んだ寸法で計算して着地がズレる */
+    const r = { width: el.offsetWidth, height: el.offsetHeight }
     const top = placement.startsWith('top')
     const end = placement.endsWith('end')
     let x = end ? a.right - r.width : a.left
