@@ -103,7 +103,7 @@ React でもプレーンな HTML でも Vue でも同じ。`docs/09-components.m
 | [06-elevation](docs/06-elevation.md) | 面を重ねるとき。影を敷いてよい条件 |
 | [07-motion](docs/07-motion.md) | 動かすとき。バネ・共有要素・視差低減 |
 | [08-layout](docs/08-layout.md) | 画面の外殻を組むとき。バー・z-index・スクロール |
-| [09-components](docs/09-components.md) | **部品カタログ（64 部品）。** 一覧表 + HTML |
+| [09-components](docs/09-components.md) | **部品カタログ（69 部品）。** 一覧表 + HTML |
 | [10-new-component](docs/10-new-component.md) | **カタログに無いものを作るとき。必ず読む** |
 | [11-states](docs/11-states.md) | 読み込み中・空・エラー・楽観的更新 |
 | [12-gestures](docs/12-gestures.md) | 指で触るものを作るとき。ハプティクス |

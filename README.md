@@ -69,7 +69,7 @@ demo/              見本帳。全部品を並べたもの（依存なし・単�
 | [06 高さ](docs/06-elevation.md) | 面の5段、影を敷いてよい条件 |
 | [07 動き](docs/07-motion.md) | バネ、共有要素、読み込みの印、視差低減 |
 | [08 外殻](docs/08-layout.md) | バー、z-index、Safe Area |
-| [09 部品カタログ](docs/09-components.md) | **64 部品**の一覧表 + HTML + 契約 |
+| [09 部品カタログ](docs/09-components.md) | **69 部品**の一覧表 + HTML + 契約 |
 | [10 新しい部品の作り方](docs/10-new-component.md) | **カタログに無いものを導出する9問** |
 | [11 状態](docs/11-states.md) | 読み込み中・空・エラー・楽観的更新 |
 | [12 ジェスチャー](docs/12-gestures.md) | 1:1 追従、ラバーバンド、ハプティクス |
