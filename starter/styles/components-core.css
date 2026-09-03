@@ -1310,6 +1310,13 @@ body.no-bars {
      will-change はここに書かない（何百行あっても全部が合成レイヤになる）。
      掴んでいる間だけ JS が付ける */
   background: var(--surface-mid);
+  /* 指なら触れば「引ける」と分かるが、マウスには手掛かりが要る
+     （.sheet__grab / .sortable__grip と同じ作法） */
+  cursor: grab;
+}
+
+.swiperow.is-dragging .swiperow__content {
+  cursor: grabbing;
 }
 
 /* ============================================================

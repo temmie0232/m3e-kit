@@ -1417,27 +1417,48 @@ export const CATALOG = [
     init(d, u) {
       const sw = u.$('.swiperow', d)
       const c = u.$('.swiperow__content', d)
+      /** いま出ている translateX（px）。走行中のアニメの値も拾える */
+      const nowX = () => new DOMMatrix(getComputedStyle(c).transform).m41
       let x0 = null
+      let base = 0
       sw.addEventListener('pointerdown', (e) => {
+        /* 主ポインタの左ボタンだけ。右ドラッグで行が動くと事故になる */
+        if (!e.isPrimary || e.button !== 0) return
+        /* ★掴んだポインタを捕まえる★ 指と違ってマウスは行の外へ簡単に出る。
+           捕まえないと外で離した pointerup を取り逃し、行が開いたまま固まる */
+        sw.setPointerCapture(e.pointerId)
+        /* 戻っている途中でも、いまの見た目のまま掴み直せるようにする
+           （走行中のアニメを畳んで、その位置を起点にする） */
+        base = nowX()
+        for (const a of c.getAnimations()) a.cancel()
+        c.style.transform = `translateX(${base}px)`
         x0 = e.clientX
         c.style.willChange = 'transform'
+        sw.classList.add('is-dragging')
       })
       sw.addEventListener('pointermove', (e) => {
         if (x0 === null) return
-        const dx = Math.min(0, e.clientX - x0)
+        const dx = Math.min(0, base + e.clientX - x0)
         c.style.transform = `translateX(${dx}px)`
         sw.classList.toggle('swiperow--armed', -dx > sw.offsetWidth * 0.4)
       })
-      const end = () => {
+      const end = (e) => {
         if (x0 === null) return
         x0 = null
+        base = 0
+        if (e && sw.hasPointerCapture(e.pointerId)) sw.releasePointerCapture(e.pointerId)
         c.style.willChange = ''
+        sw.classList.remove('is-dragging')
         const armed = sw.classList.contains('swiperow--armed')
-        c.animate([{}, { transform: 'translateX(0)' }], {
+        /* ★戻りの起点を明示する★ 空のキーフレーム [{}, …] は「そのときの
+           下地の値」を読むので、先に transform を消すと none → 0 になり、
+           500ms 走っているのに1pxも動かず瞬間移動して見える */
+        const from = c.style.transform || 'translateX(0px)'
+        c.style.transform = ''
+        c.animate([{ transform: from }, { transform: 'translateX(0px)' }], {
           duration: 500,
           easing: 'cubic-bezier(0.25, 1.05, 0.35, 1)',
         })
-        c.style.transform = ''
         sw.classList.remove('swiperow--armed')
         if (armed) u.toast(d, '1件を削除しました', '元に戻す')
       }
