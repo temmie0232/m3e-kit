@@ -136,10 +136,13 @@
   color: var(--on-surface);
 }
 
-/* シート・ダイアログの中に置くときは地を持たせない */
+/* ★ほかの面の中に置いたら地を持たせない★ 持ったままだと
+   「カードの中のカード」になって段が2つ飛ぶ（docs/06-elevation.md） */
 .sheet .cal,
 .dialog .cal,
-.popover .cal {
+.popover .cal,
+.panel .cal,
+.sidesheet .cal {
   background: transparent;
   padding: 0;
 }

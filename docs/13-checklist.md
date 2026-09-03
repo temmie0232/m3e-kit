@@ -16,6 +16,9 @@
 - [ ] カードは `surface-mid` で影なし。影があるのは浮いているものだけ
 - [ ] `on-` 色が対で使われている（`primary-container` の上は `on-primary-container`）
 - [ ] ダークとライトの両方で見た。切替でチラつかない
+- [ ] `grep -n 'data-theme\|data-seed' src/` の結果が、`<html>` に付ける
+      1箇所だけ。**アプリのデータ属性として使っていない**
+      （テーマ切替ボタンに `data-theme="dark"` と書くと、そのボタンだけ暗くなる）
 
 ## 間隔・折り返し
 

@@ -36,15 +36,22 @@
   flex-direction: column;
   gap: var(--s-3);
   padding: var(--s-4);
-  /* ★下から積む★ 発話が少ないうちは下に寄せる。上に寄せると、
-     入力帯との間に広い空白ができて「壊れている」ように見える */
-  justify-content: flex-end;
 }
 
-/* 中身が入りきったら、上から流す（justify-content: flex-end のままだと
-   古い発話が上に切れて掴めなくなる） */
 .chat__log > * {
   flex: 0 0 auto;
+}
+
+/* ★下から積む。ただし justify-content: flex-end は使わない★
+   発話が少ないうちは下に寄せたいが、`justify-content: flex-end` にすると
+   中身が溢れたときに**上へ溢れてスクロールで到達できなくなる**
+   （scrollHeight が clientHeight と同じままになる。実測で会話の冒頭
+   109px が永久に見えなくなった）。
+   最初の子に margin-top: auto を置けば、余っているときだけ下へ押し、
+   溢れたら auto が 0 に解決されて普通にスクロールできる。
+   ここは「兄弟の間隔」ではなく「押し出し」なので margin で正しい */
+.chat__log > :first-child {
+  margin-top: auto;
 }
 
 /* 日付・「ここから未読」などの区切り */

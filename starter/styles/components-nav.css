@@ -19,11 +19,6 @@
    ★ここのブレークポイントは tokens.css の --bp-* と一致させる★
    （@media は var() を読めないので実数を書くしかない）
    ============================================================ */
-.rail,
-.drawer--standard {
-  display: none;
-}
-
 /* ★占有量は :root に書く★ .app に書くと、body 直下の portal
    （スナックバー・Popover API で出したもの）に値が届かない。
    :has() で「適応レイアウトのアプリが載っているページ」だけに当てる */
@@ -68,6 +63,12 @@
    medium 幅で使う。上に menu ボタンと FAB、下に行き先。
    ============================================================ */
 .rail {
+  /* ★display は自分の規則の中で宣言する★
+     まとめて `.rail, .drawer--standard { display: none }` を先頭に書くと、
+     後から出てくる `.drawer { display: flex }` に**同じ詳細度で順番負け**して、
+     携帯幅でも常設ドロワーが出てしまう（実際に踏んだ）。
+     出すのは .app--adaptive のメディアクエリだけ */
+  display: none;
   position: absolute;
   left: 0;
   top: 0;
@@ -199,6 +200,8 @@
 }
 
 .drawer--standard {
+  /* ★.drawer { display: flex } より後ろで隠す★（理由は .rail の注記） */
+  display: none;
   position: absolute;
   left: 0;
   top: 0;

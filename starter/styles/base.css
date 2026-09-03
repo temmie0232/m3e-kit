@@ -51,6 +51,30 @@ img {
   -webkit-user-drag: none;
 }
 
+/* ★見出し・段落・一覧の既定 margin を落とす★
+   このキットは「兄弟の間隔は gap で作る。個別 margin を書かない」という
+   規約（docs/05-space.md）で組んであるのに、UA スタイルシートの <p> は
+   上下 1em の margin を持っている。gap を持つ列に <p> を1つ置いた瞬間、
+   そこだけ間隔が足し算になる（実測: gap 12 + margin 14 = 26px）。
+   ★.prose だけは例外★ 生成された HTML が相手でクラスを付けられないので、
+   components-data.css が自分で margin を持つ（あちらが後勝ちする） */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p,
+ul,
+ol,
+dl,
+dd,
+figure,
+blockquote,
+pre {
+  margin: 0;
+}
+
 /* 文字として扱いたいものだけ選択を戻す。
    ★要素セレクタも必ず併記すること★ クラス名だけで戻すと、端末によっては
    input / textarea の中の選択やキャレット移動まで巻き添えで死ぬ。
@@ -114,6 +138,17 @@ a:active {
 
 .mono {
   font-family: var(--font-num);
+}
+
+/* ★hidden を効かせる★
+   `hidden` 属性の実体は UA スタイルシートの `display: none` でしかないので、
+   作成者側で `display` を持つ相手には**黙って負ける**。
+   このキットの部品はほとんどが `display: flex` / `grid` を持っているので、
+   `<div class="empty" hidden>` や `<section class="col" hidden>` が
+   何事もなかったように表示されてしまう。
+   ここで1回だけ強く宣言して、`hidden` を「必ず消える」の意味に戻す。 */
+[hidden] {
+  display: none !important;
 }
 
 /* 読み上げ専用。目には出さないが DOM からは消さない */
