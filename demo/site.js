@@ -16,7 +16,10 @@
    ============================================================ */
 
 import { CATALOG, GROUPS } from './catalog.js'
-import { SPRITE } from './icons.js'
+
+/* アイコンは starter/ の生成物をそのまま読む（図鑑用に別のものを持たない）。
+   ★生成物は .svg なので fetch する★ import できるのは JS だけ */
+const SPRITE = await fetch('../starter/icons/sprite.svg').then((r) => r.text())
 
 const $ = (s, r = document) => r.querySelector(s)
 const $$ = (s, r = document) => [...r.querySelectorAll(s)]
@@ -270,6 +273,93 @@ const U = {
       easing: 'cubic-bezier(0.2, 0, 0, 1)',
     })
     d.defaultView.setTimeout(() => el.remove(), 4000)
+  },
+
+
+  /** ドラッグ並べ替え。lib/sortable.ts の素の JS 版（指に 1:1 で追従） */
+  sortable(d, list, itemSel, handleSel) {
+    const win = d.defaultView
+    let rows = []
+    let drag = null
+    let from = 0
+    let to = 0
+    let y0 = 0
+    let h = 0
+
+    const reset = () => {
+      for (const r of rows) {
+        r.style.transform = ''
+        r.style.transition = ''
+        r.style.zIndex = ''
+        r.style.willChange = ''
+        r.classList.remove('is-dragging')
+      }
+      drag = null
+    }
+    const paint = () => {
+      rows.forEach((r, i) => {
+        if (r === drag) return
+        let shift = 0
+        if (from < to && i > from && i <= to) shift = -h
+        else if (from > to && i < from && i >= to) shift = h
+        r.style.transition = 'transform 500ms cubic-bezier(0.25,1.05,0.35,1)'
+        r.style.transform = shift ? `translateY(${shift}px)` : ''
+      })
+    }
+
+    list.addEventListener('pointerdown', (e) => {
+      const row = e.target.closest?.(itemSel)
+      if (!row || !e.target.closest(handleSel)) return
+      rows = [...list.querySelectorAll(itemSel)]
+      from = to = rows.indexOf(row)
+      h = row.offsetHeight
+      y0 = e.clientY
+      drag = row
+      row.classList.add('is-dragging')
+      row.style.zIndex = '1'
+      /* ★掴んでいる間だけ★ 常設すると一覧の全行が合成レイヤになる */
+      row.style.willChange = 'transform'
+      row.setPointerCapture?.(e.pointerId)
+      win.navigator.vibrate?.(12)
+    })
+
+    list.addEventListener('pointermove', (e) => {
+      if (!drag) return
+      e.preventDefault()
+      const dy = e.clientY - y0
+      drag.style.transform = `translateY(${dy}px)`
+      const next = Math.min(rows.length - 1, Math.max(0, from + Math.round(dy / h)))
+      if (next !== to) {
+        to = next
+        paint()
+        win.navigator.vibrate?.(6)
+      }
+    })
+
+    const end = () => {
+      if (!drag) return
+      const el = drag
+      const settle = (to - from) * h
+      const anim = el.animate(
+        [{ transform: el.style.transform }, { transform: `translateY(${settle}px)` }],
+        { duration: 500, easing: 'cubic-bezier(0.25,1.05,0.35,1)', fill: 'forwards' },
+      )
+      const [f, t] = [from, to]
+      drag = null
+      anim.finished
+        .catch(() => {})
+        .then(() => {
+          anim.cancel()
+          /* 実際に DOM の順を入れ替えてから、ずらしを全部消す */
+          if (f !== t) {
+            const moved = rows[f]
+            const ref = f < t ? rows[t].nextSibling : rows[t]
+            moved.parentNode.insertBefore(moved, ref)
+          }
+          reset()
+        })
+    }
+    for (const t of ['pointerup', 'pointercancel']) list.addEventListener(t, end)
   },
 
   /** 読み込みの印。lib/loader.ts の移植（極座標 → 3次ベジェ → d の補間） */

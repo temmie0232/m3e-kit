@@ -7,11 +7,14 @@
   "scripts": {
     "//": "starter/ の配色を作り直す。シードを増やす・変えるときに回す",
     "gen:scheme": "esbuild starter/scripts/gen-m3-scheme.mjs --bundle --platform=node --format=esm --outfile=node_modules/.cache/gen-m3-scheme.mjs --log-level=error && M3E_OUT=starter node node_modules/.cache/gen-m3-scheme.mjs",
+    "//icons": "starter/ のアイコンを作り直す。使うアイコンを増やすときは scripts/gen-icons.mjs の NAMES に lucide の名前を足して回す",
+    "gen:icons": "M3E_OUT=starter node starter/scripts/gen-icons.mjs",
     "//demo": "部品図鑑を配る。依存なしの静的ファイルなので何で配ってもよい。★リポジトリのルートを配ること★ demo/ は ../starter/styles/ を相対パスで読むので、demo/ を配信ルートにすると 404 になる",
     "demo": "echo '→ http://localhost:8080/demo/' && python3 -m http.server 8080"
   },
   "devDependencies": {
     "@material/material-color-utilities": "^0.4.0",
-    "esbuild": "^0.25.0"
+    "esbuild": "^0.25.0",
+    "lucide-static": "^1.39.0"
   }
 }

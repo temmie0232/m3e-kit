@@ -103,7 +103,7 @@ React でもプレーンな HTML でも Vue でも同じ。`docs/09-components.m
 | [06-elevation](docs/06-elevation.md) | 面を重ねるとき。影を敷いてよい条件 |
 | [07-motion](docs/07-motion.md) | 動かすとき。バネ・共有要素・視差低減 |
 | [08-layout](docs/08-layout.md) | 画面の外殻を組むとき。バー・z-index・スクロール |
-| [09-components](docs/09-components.md) | **部品カタログ（70 部品）。** 一覧表 + HTML |
+| [09-components](docs/09-components.md) | **部品カタログ（80 部品）。** 一覧表 + HTML |
 | [10-new-component](docs/10-new-component.md) | **カタログに無いものを作るとき。必ず読む** |
 | [11-states](docs/11-states.md) | 読み込み中・空・エラー・楽観的更新 |
 | [12-gestures](docs/12-gestures.md) | 指で触るものを作るとき。ハプティクス |
@@ -114,6 +114,9 @@ React でもプレーンな HTML でも Vue でも同じ。`docs/09-components.m
 | [17-forms](docs/17-forms.md) | 入力の組み方・検証・保存・日付・OTP |
 | [18-data](docs/18-data.md) | 一覧・表・図。表を携帯で使わない理由 |
 | [19-shadcn-map](docs/19-shadcn-map.md) | shadcn/ui の名前から引く対応表 |
+| [20-chat](docs/20-chat.md) | チャット・AI の返答。**会話は一覧ではない** |
+| [21-media](docs/21-media.md) | 写真と動画。共有要素で飛ぶ。**ここだけ色の規約から外れる** |
+| [22-icons](docs/22-icons.md) | アイコン。Lucide を焼き込む |
 
 ---
 
@@ -136,12 +139,16 @@ React でもプレーンな HTML でも Vue でも同じ。`docs/09-components.m
 | 一覧の追加読み込み | 無限スクロール + 引いて更新。ページ送りは表と検索結果だけ |
 | 開閉するもの | `<details>` + `.accordion`。div と JS で作り直さない |
 | メニュー・ポップオーバーの出し入れ | `popover` 属性（Popover API）。自前の外側クリック検出を書かない |
+| アイコン | Lucide（焼き込み済み）。自分で path を書かない。`aria-label` を必ず付ける |
+| チャットの送信 | 楽観的更新。押した瞬間に自分の発話を出し、失敗したら `.msg--failed` |
+| 一覧 → 全画面 | 共有要素で飛ばす（`lib/flight.ts`）。ぱっと差し替えない |
+| 並べ替え | `lib/sortable.ts`。HTML5 の drag & drop は使わない（触る画面で動かない） |
 
 ---
 
 ## 5. 見た目を確認する
 
-`demo/` が**部品図鑑**。70 部品が実際に動き、HTML をそのままコピーできる。
+`demo/` が**部品図鑑**。80 部品が実際に動き、HTML をそのままコピーできる。
 
 ```
 npm run demo   →  http://localhost:8080/demo/

@@ -1,0 +1,196 @@
+/* ============================================================
+   印刷 — 紙とPDF
+
+   画面のためのアプリでも、印刷は必ず要る場面がある（領収書・明細・
+   予定表・レポート）。何もしないと、暗い地が塗られ、バーが本文に
+   重なり、影が灰色の帯になって出る。
+
+   考え方は1つ:
+     **紙は「触れない画面」。操作を全部消して、中身だけを黒で置く。**
+   ============================================================ */
+
+@media print {
+  /* ---------------------------------------------------------- 地と文字
+     ★ダークテーマのまま刷らせない★ トナーを食い潰し、しかも読めない。
+     色は役割ごと白黒に倒す */
+  :root,
+  [data-theme] {
+    --surface: #ffffff;
+    --surface-dim: #ffffff;
+    --surface-bright: #ffffff;
+    --surface-lowest: #ffffff;
+    --surface-low: #ffffff;
+    --surface-mid: #ffffff;
+    --surface-high: #ffffff;
+    --surface-highest: #ffffff;
+    --on-surface: #000000;
+    --on-surface-variant: #333333;
+    --outline: #666666;
+    --outline-variant: #cccccc;
+    /* primary は残す。図の線と「いま見ている値」は色で読ませたい
+       （カラー印刷でなければ濃度に落ちるだけで、意味は保たれる） */
+  }
+
+  html,
+  body,
+  #root {
+    height: auto;
+    background: #ffffff;
+    color: #000000;
+  }
+
+  body {
+    /* 画面用に切ってあるものを戻す */
+    -webkit-user-select: auto;
+    user-select: auto;
+    overscroll-behavior: auto;
+  }
+
+  /* ---------------------------------------------------------- 外殻を外す
+     .app / .main は「画面の高さに収める」ための箱なので、
+     紙では全部ただの流れに戻す */
+  .app,
+  .main,
+  .chat {
+    display: block;
+    position: static;
+    height: auto;
+    max-width: none;
+    overflow: visible;
+    padding: 0;
+    border: 0;
+    animation: none;
+  }
+
+  .main--padded {
+    padding: 0;
+    display: block;
+  }
+
+  /* ---------------------------------------------------------- 操作を消す
+     押せるものは紙の上では意味を持たない。★ただし中身は消さない★
+     ボタンのラベルが情報を持っていることがあるので、
+     「操作のための入れ物」だけを消す */
+  .appbar,
+  .navbar,
+  .rail,
+  .drawer,
+  .bottombar,
+  .toolbar,
+  .fab,
+  .fabmenu,
+  .toasts,
+  .scrim,
+  .sheet,
+  .sidesheet,
+  .dialog,
+  .ptr,
+  .banner,
+  .searchview,
+  .command,
+  [popover],
+  .composer,
+  .chat__jump,
+  .iconbtn,
+  .swiperow__bg {
+    display: none !important;
+  }
+
+  /* ---------------------------------------------------------- 面と影
+     影は紙の上でただの灰色の帯になる。層は罫線で表す */
+  .panel,
+  .panel--elevated,
+  .panel--outlined,
+  .notice,
+  .table-wrap {
+    box-shadow: none;
+    border: 1px solid var(--outline-variant);
+    border-radius: 0;
+    background: none;
+    break-inside: avoid;
+  }
+
+  .skel {
+    display: none;
+  }
+
+  /* ---------------------------------------------------------- 切れないようにする */
+  .row,
+  .msg,
+  .agenda__day,
+  .timeline__item,
+  .accordion__item,
+  figure,
+  img,
+  svg {
+    break-inside: avoid;
+  }
+
+  h1,
+  h2,
+  h3,
+  .label,
+  .section__head {
+    break-after: avoid;
+  }
+
+  /* ★畳んであるものを開いて刷る★ 紙には「押して開く」が無い */
+  details {
+    display: block;
+  }
+
+  details > summary {
+    list-style: none;
+  }
+
+  details:not([open]) > *:not(summary) {
+    display: revert;
+  }
+
+  /* ---------------------------------------------------------- 表 */
+  .table-wrap {
+    overflow: visible;
+  }
+
+  .table th {
+    position: static;
+    background: none;
+    /* 複数ページに渡る表で、各ページに見出しを出す */
+  }
+
+  thead {
+    display: table-header-group;
+  }
+
+  .table td,
+  .table th {
+    box-shadow: none;
+    border-bottom: 1px solid var(--outline-variant);
+  }
+
+  .table__stick {
+    position: static;
+  }
+
+  /* ---------------------------------------------------------- リンク
+     ★URL を後ろに出す★ 紙では押せないので、行き先が分からないと
+     ただの色付き文字になる。画面内アンカーは出さない */
+  .prose a[href^='http']::after {
+    content: ' (' attr(href) ')';
+    font-size: 0.85em;
+    color: #666666;
+    word-break: break-all;
+  }
+
+  /* ---------------------------------------------------------- 動きを止める */
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  @page {
+    margin: 16mm;
+  }
+}

@@ -1,0 +1,279 @@
+/* ============================================================
+   写真と動画 — グリッド・全画面ビューア・共有要素で飛ぶ
+
+   ★ここだけ色の規約から外れる★ 背後が必ず写真なので、テーマの色を
+   使うと明るい写真の上で消える。地は必ず黒（--behind）、その上に置く
+   ものは黒 45% の円に白（.iconbtn--onmedia）。
+   手書きの hex を許すのはここだけ（→ docs/02-color.md）。
+
+   ★実装のうち CSS で決まるのは「見た目」だけ★ 1:1 で追従する
+   ジェスチャーは JS が要る。lib/flight.ts が共有要素の飛行を持ち、
+   下スワイプで閉じる・ピンチで拡大は docs/12-gestures.md の契約に沿って
+   アプリ側で書く（部品として固めるには、掴む対象がアプリごとに違いすぎる）。
+   ============================================================ */
+
+/* ============================================================
+   1. グリッド
+   ★隙間は 3px 固定★ 写真どうしの間隔はトークンに従わせない。
+   ここだけは「写真が主役で、隙間は無いほうがよい」が勝つ
+   ============================================================ */
+.gallery {
+  display: grid;
+  grid-template-columns: repeat(var(--cols, 3), 1fr);
+  gap: 3px;
+}
+
+@media (min-width: 600px) {
+  .gallery {
+    --cols: 4;
+  }
+}
+
+@media (min-width: 900px) {
+  .gallery {
+    --cols: 6;
+  }
+}
+
+/* タイル。★角丸を押下で変えない★ 並んだ矩形が一斉に動くとちらつく */
+.tile {
+  position: relative;
+  aspect-ratio: 1;
+  overflow: hidden;
+  border-radius: 6px;
+  background: var(--surface-highest);
+  /* 拡大して飛ぶときの基準になるので、transform を常設しない */
+  cursor: pointer;
+}
+
+.tile img,
+.tile video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* 読み込み前 */
+.tile--skel {
+  animation: skel-pulse 1400ms ease-in-out infinite;
+}
+
+/* 動画の時間・種類。★黒帯 + 白★ 背後が写真なので固定色 */
+.tile__badge {
+  position: absolute;
+  right: 4px;
+  bottom: 4px;
+  padding: 1px 5px;
+  border-radius: var(--shape-xs);
+  background: rgb(0 0 0 / 0.55);
+  color: #ffffff;
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--t-label-s);
+  line-height: 1.4;
+}
+
+/* 選択モード。★チェックは左上、地を暗くする★ 枠だけだと写真の内容に
+   よっては見えない */
+.tile__check {
+  position: absolute;
+  left: 4px;
+  top: 4px;
+  width: 22px;
+  height: 22px;
+  border-radius: var(--shape-full);
+  display: grid;
+  place-items: center;
+  background: rgb(0 0 0 / 0.45);
+  color: #ffffff;
+  opacity: 0;
+  transition: opacity var(--d-effects) var(--ease-effects);
+}
+
+.gallery--selecting .tile__check {
+  opacity: 1;
+}
+
+.tile[aria-selected='true'] .tile__check {
+  background: var(--primary);
+  color: var(--on-primary);
+  opacity: 1;
+}
+
+.tile[aria-selected='true'] img,
+.tile[aria-selected='true'] video {
+  /* 選ばれたことを縮小で示す。★ここは例外的に scale を使う★
+     押下ではなく「選択」なので、形の変化では表しきれない */
+  transform: scale(0.88);
+  transition: transform var(--d-spatial-fast) var(--ease-spatial-fast);
+}
+
+/* ============================================================
+   2. 全画面ビューア
+   ============================================================ */
+.viewer {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-viewer);
+  /* ★必ず黒★ 写真・動画の外側に見える色なので、テーマに追従させない */
+  background: var(--behind);
+  display: flex;
+  flex-direction: column;
+  /* 拡大・横送りを全部自前で拾う */
+  touch-action: none;
+  overscroll-behavior: none;
+}
+
+/* 下スワイプで閉じるとき、地だけ独立して薄くする（写真は薄くしない） */
+.viewer__scrim {
+  position: absolute;
+  inset: 0;
+  background: var(--behind);
+  will-change: opacity;
+}
+
+/* 横に並ぶ1枚ぶんの枠。★padding は JS と共有する値★
+   写真の着地位置の計算に入るので、変えるときは両方直す */
+.viewer__slide {
+  position: absolute;
+  inset: 0;
+  padding: var(--s-2);
+  display: grid;
+  place-items: center;
+  will-change: transform;
+}
+
+.viewer__img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  display: block;
+  /* 掴んで動かすので、ブラウザのドラッグを止める */
+  -webkit-user-drag: none;
+  user-select: none;
+}
+
+/* 上下のバー。★写真の上なので固定色★ */
+.viewer__bar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  padding: var(--s-2) var(--s-2);
+  color: #ffffff;
+  /* 明るい写真でもボタンが読めるように、帯ではなくグラデーションで沈める */
+  background: linear-gradient(rgb(0 0 0 / 0.45), transparent);
+  transition: opacity var(--d-effects) var(--ease-effects);
+}
+
+.viewer__bar--top {
+  top: 0;
+  padding-top: calc(var(--safe-top) + var(--s-2));
+}
+
+.viewer__bar--bottom {
+  bottom: 0;
+  padding-bottom: calc(var(--safe-bottom) + var(--s-2));
+  background: linear-gradient(transparent, rgb(0 0 0 / 0.45));
+  justify-content: center;
+}
+
+/* 一度触ると隠れる（写真を見せるのが目的なので） */
+.viewer--bare .viewer__bar {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.viewer__count {
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--t-label-l);
+  color: #ffffff;
+}
+
+.viewer__spacer {
+  flex: 1;
+}
+
+/* ============================================================
+   3. 共有要素で飛ぶ1枚
+   一覧 → 詳細を地続きに見せる（docs/07-motion.md §共有要素）。
+   body 直下に置き、transform と clip-path だけを動かす。
+
+   ★.app に transform / filter を載せない★ 載せた瞬間に fixed の
+   containing block が .app になり、ビューポート座標で書いた
+   left/top と食い違って着地位置がズレる
+   ============================================================ */
+.flight {
+  position: fixed;
+  z-index: var(--z-flight);
+  margin: 0;
+  object-fit: cover;
+  transform-origin: top left;
+  will-change: transform, clip-path;
+  pointer-events: none;
+}
+
+/* ============================================================
+   4. 動画の操作
+   ★ネイティブの controls を出さない★ OS ごとに顔が違い、
+   そこだけ「Webページ」に見える
+   ============================================================ */
+.player {
+  position: relative;
+  width: 100%;
+  background: var(--behind);
+}
+
+.player video {
+  width: 100%;
+  display: block;
+}
+
+.player__bar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  padding: var(--s-3);
+  color: #ffffff;
+  background: linear-gradient(transparent, rgb(0 0 0 / 0.55));
+}
+
+/* 位置。トラックは白 30%、値は白（テーマの primary は写真の上で消える） */
+.player__track {
+  flex: 1;
+  height: 4px;
+  border-radius: var(--shape-full);
+  background: rgb(255 255 255 / 0.3);
+  overflow: hidden;
+  /* 掴みやすいように、当たり判定だけ縦に広げる */
+  position: relative;
+}
+
+.player__track::after {
+  content: '';
+  position: absolute;
+  inset: -16px 0;
+}
+
+.player__fill {
+  height: 100%;
+  width: var(--p, 0%);
+  background: #ffffff;
+  border-radius: var(--shape-full);
+}
+
+.player__time {
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--t-label-m);
+  color: #ffffff;
+}

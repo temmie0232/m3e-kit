@@ -45,18 +45,26 @@ starter/           そのままコピーして使う実体
     components-overlay メニュー・ポップオーバー・ツールチップ・開閉・⌘K
     components-form    コンボボックス・日付/時刻・OTP・トグル・分割ボタン
     components-data    アバター・表・カルーセル・木・手順・年表・図・本文
+    components-chat    会話（吹き出し・入力帯・ストリーミング）
+    components-media   写真と動画（グリッド・ビューア・共有要素）
+    components-extra   ログイン画面・ドラッグ並べ替え・予定表
+    print.css          紙とPDF
+  icons/sprite.svg   生成物。Lucide から焼いた 106 個
   lib/
     motion.ts        M3 のバネを linear() に焼く / 速度追跡 / 中断可能な動き
     loader.ts        形が変わる読み込みの印
     press.ts         pointerdown で .is-pressed（押下の即時反応）
     overlay.ts       メニュー・候補の位置決めと ↑↓ の操作
+    flight.ts        共有要素で飛ぶ（一覧 → 全画面）
+    sortable.ts      ドラッグで並べ替える（HTML5 の DnD は使わない）
     theme.ts         明暗とシードの適用・保存
-    seeds.ts         生成物。シードの一覧
+    seeds.ts / icons.ts   生成物（シードの一覧 / アイコン）
   scripts/
     gen-m3-scheme.mjs  シード色から配色を算出して CSS に静的化する
+    gen-icons.mjs      Lucide から使うアイコンだけ焼く
 demo/              ★部品図鑑★ 全部品が実際に動き、HTML をコピーできる
   index.html         図鑑の枠組み
-  catalog.js         70 部品のデータ（html はここに1度だけ書く）
+  catalog.js         80 部品のデータ（html はここに1度だけ書く）
   site.js            索引・検索・プレビュー（iframe）・コード表示
   site.css / icons.js
 ```
@@ -73,7 +81,7 @@ demo/              ★部品図鑑★ 全部品が実際に動き、HTML をコ�
 | [06 高さ](docs/06-elevation.md) | 面の5段、影を敷いてよい条件 |
 | [07 動き](docs/07-motion.md) | バネ、共有要素、読み込みの印、視差低減 |
 | [08 外殻](docs/08-layout.md) | バー、z-index、Safe Area |
-| [09 部品カタログ](docs/09-components.md) | **70 部品**の一覧表 + HTML + 契約 |
+| [09 部品カタログ](docs/09-components.md) | **80 部品**の一覧表 + HTML + 契約 |
 | [10 新しい部品の作り方](docs/10-new-component.md) | **カタログに無いものを導出する9問** |
 | [11 状態](docs/11-states.md) | 読み込み中・空・エラー・楽観的更新 |
 | [12 ジェスチャー](docs/12-gestures.md) | 1:1 追従、ラバーバンド、ハプティクス |
@@ -84,6 +92,9 @@ demo/              ★部品図鑑★ 全部品が実際に動き、HTML をコ�
 | [17 入力の設計](docs/17-forms.md) | 並び・型・検証・保存・日付・OTP・ファイル |
 | [18 一覧・表・図](docs/18-data.md) | 表を携帯で使わない理由、系列色、仮想化 |
 | [19 shadcn 対応表](docs/19-shadcn-map.md) | shadcn/ui の名前から引く |
+| [20 会話](docs/20-chat.md) | 吹き出し・入力帯・ストリーミング・AI の返答 |
+| [21 写真と動画](docs/21-media.md) | グリッド・全画面ビューア・共有要素・動画 |
+| [22 アイコン](docs/22-icons.md) | Lucide の焼き込み方と規約 |
 
 ---
 
@@ -96,7 +107,7 @@ npm run demo    # → http://localhost:8080/demo/
 ★リポジトリのルートから配ること★ 図鑑は `../starter/styles/` を相対パスで読む
 （`demo/` を配信ルートにすると 404 になる）。
 
-- 左の索引で 70 部品を探す。`⌘K` で検索へ。
+- 左の索引で 80 部品を探す。`⌘K` で検索へ。
   日本語名・英語名・**shadcn の名前**・別名のどれでも引ける
 - プレビューは **iframe**。幅を **360 / 720 / 1100** に切り替えられるので、
   PC のブラウザのまま「携帯で崩れるか」と適応レイアウトを確認できる

@@ -2032,6 +2032,373 @@ export const CATALOG = [
 </div>`,
   },
 
+  /* ============================================================ 会話 */
+  {
+    id: 'chat',
+    name: '会話（チャット）',
+    m3: '（M3 に無い）',
+    group: '会話',
+    file: 'chat',
+    doc: '20-chat',
+    tags: 'chat message bubble conversation ai 会話 チャット 吹き出し',
+    note: 'チャットは「一覧」ではなく「会話」。区切り線を引かず、自分と相手を**左右**で分ける（色だけで分けない）。新しいものが下。',
+    contracts: [
+      '吹き出しは中身なりの幅。1文字の返事が画面幅いっぱいにならないようにする',
+      '時刻・既読は吹き出しの外に出す。中に入れると短い返事で時刻が幅を決めてしまう',
+      '発話に付ける操作は常に出す。hover でしか出ないと触る画面では永久に見つからない',
+      '吹き出しの中は user-select: text に戻す（コピーされるためにある）',
+    ],
+    frame: 'app',
+    w: 360,
+    h: 460,
+    html: `<div class="chat">
+  <div class="chat__log">
+    <span class="chat__mark">今日</span>
+
+    <div class="msg">
+      <div class="msg__bubble">先月の食費、いくらだった？</div>
+      <div class="msg__meta">09:12</div>
+    </div>
+
+    <div class="msg msg--me">
+      <div class="msg__bubble">38,420円でした。先月より 12% 増えています。</div>
+      <div class="msg__meta">09:12 · 既読</div>
+    </div>
+
+    <div class="msg">
+      <div class="msg__bubble">内訳を出して</div>
+    </div>
+
+    <div class="msg msg--me">
+      <div class="msg__bubble">
+        <div class="prose">
+          <ul><li>外食 18,200</li><li>食料品 14,900</li><li>飲み物 5,320</li></ul>
+        </div><span class="msg__caret"></span>
+      </div>
+      <div class="msg__acts">
+        <button class="iconbtn" aria-label="コピー"><svg class="icon"><use href="#i-copy"/></svg></button>
+        <button class="iconbtn" aria-label="やり直す"><svg class="icon"><use href="#i-refresh"/></svg></button>
+      </div>
+    </div>
+  </div>
+
+  <div class="composer">
+    <button class="composer__act" aria-label="添付"><svg class="icon"><use href="#i-attach"/></svg></button>
+    <textarea class="composer__input" rows="1" placeholder="メッセージ"></textarea>
+    <button class="composer__send" aria-label="送信"><svg class="icon"><use href="#i-send"/></svg></button>
+  </div>
+</div>`,
+    init(d, u) {
+      const log = u.$('.chat__log', d)
+      const ta = u.$('.composer__input', d)
+      const send = u.$('.composer__send', d)
+      log.scrollTop = log.scrollHeight
+      /* 入力は中身で伸ばす。最大は CSS の max-height が抑える */
+      const grow = () => {
+        ta.style.height = 'auto'
+        ta.style.height = `${ta.scrollHeight}px`
+        send.disabled = !ta.value.trim()
+      }
+      ta.addEventListener('input', grow)
+      grow()
+      send.onclick = () => {
+        const text = ta.value.trim()
+        if (!text) return
+        const el = d.createElement('div')
+        el.className = 'msg'
+        el.innerHTML = '<div class="msg__bubble"></div><div class="msg__meta">いま</div>'
+        el.querySelector('.msg__bubble').textContent = text
+        log.appendChild(el)
+        ta.value = ''
+        grow()
+        log.scrollTop = log.scrollHeight
+      }
+    },
+  },
+
+  {
+    id: 'composer',
+    name: '入力帯',
+    m3: '（Search bar の派生）',
+    group: '会話',
+    file: 'chat',
+    doc: '20-chat',
+    tags: 'composer input bar send textarea 入力帯 送信',
+    note: '下端に貼り付く。1行のときは 48、伸びても最大 5行ぶん。空のときは送信を押せなくするが、**消さない**（消えると「送るところが無い」画面になる）。',
+    contracts: [
+      'font-size は 16px を下回らせない（iOS がフォーカスで拡大して戻さなくなる）',
+      '無制限に伸ばさない。画面が入力欄で埋まる',
+    ],
+    h: 200,
+    html: `<div class="composer" style="border-radius:16px">
+  <button class="composer__act" aria-label="添付"><svg class="icon"><use href="#i-attach"/></svg></button>
+  <textarea class="composer__input" rows="1" placeholder="メッセージ"></textarea>
+  <button class="composer__send" aria-label="送信" disabled><svg class="icon"><use href="#i-send"/></svg></button>
+</div>`,
+    init(d, u) {
+      const ta = u.$('.composer__input', d)
+      const send = u.$('.composer__send', d)
+      const grow = () => {
+        ta.style.height = 'auto'
+        ta.style.height = `${ta.scrollHeight}px`
+        send.disabled = !ta.value.trim()
+      }
+      ta.addEventListener('input', grow)
+      grow()
+    },
+  },
+
+  /* ============================================================ 写真と動画 */
+  {
+    id: 'gallery',
+    name: '写真グリッド',
+    m3: '（M3 に無い）',
+    group: '写真と動画',
+    file: 'media',
+    doc: '21-media',
+    tags: 'gallery grid photo image tile 写真 一覧 グリッド',
+    note: '★タイルを押すと全画面へ飛ぶ★ 隙間は 3px 固定（写真が主役で、隙間は無いほうがよい）。列数は画面幅で 3 → 4 → 6。',
+    contracts: [
+      'タイルの角丸を押下で変えない。並んだ矩形が一斉に動くとちらつく',
+      'バッジ・チェックは黒帯 + 白の固定色。背後が写真なのでテーマに追従させない',
+      '選択中の縮小はここだけ scale を使ってよい（押下ではなく「選択」なので形では表せない）',
+    ],
+    w: 360,
+    h: 400,
+    html: `<div class="gallery">
+  <button class="tile" style="background:var(--primary-container)"></button>
+  <button class="tile" style="background:var(--tertiary-container)">
+    <span class="tile__badge">1:24</span>
+  </button>
+  <button class="tile" style="background:var(--secondary-container)"></button>
+  <button class="tile" style="background:var(--primary-fixed-dim)"></button>
+  <button class="tile" style="background:var(--tertiary-fixed-dim)"></button>
+  <button class="tile tile--skel"></button>
+</div>`,
+    init(d, u) {
+      for (const t of u.$$('.tile', d))
+        t.onclick = () => u.toast(d, 'ここから全画面ビューアへ飛ばす（共有要素）')
+    },
+  },
+
+  {
+    id: 'viewer',
+    name: '全画面ビューア',
+    m3: '（M3 に無い）',
+    group: '写真と動画',
+    file: 'media',
+    doc: '21-media',
+    tags: 'viewer lightbox fullscreen photo 全画面 ビューア 拡大',
+    note: '地は**必ず黒**。上下のバーは帯ではなくグラデーションで沈める（明るい写真でもボタンが読める）。一度触ると隠れる。',
+    contracts: [
+      'ここだけ手書きの hex を許す。背後が必ず写真なので、テーマの色では消える',
+      '下スワイプで閉じるときは、地だけ独立して薄くする（写真は薄くしない）',
+      'ズーム中は横スワイプを無効にする',
+    ],
+    w: 360,
+    h: 420,
+    html: `<div class="viewer" style="position:absolute">
+  <div class="viewer__slide">
+    <div style="width:80%; aspect-ratio:3/4; background:var(--primary-container); border-radius:4px"></div>
+  </div>
+
+  <div class="viewer__bar viewer__bar--top">
+    <button class="iconbtn iconbtn--onmedia" aria-label="閉じる"><svg class="icon"><use href="#i-close"/></svg></button>
+    <span class="viewer__count">3 / 24</span>
+    <div class="viewer__spacer"></div>
+    <button class="iconbtn iconbtn--onmedia" aria-label="その他"><svg class="icon"><use href="#i-more"/></svg></button>
+  </div>
+
+  <div class="viewer__bar viewer__bar--bottom">
+    <button class="iconbtn iconbtn--onmedia" aria-label="共有"><svg class="icon"><use href="#i-share"/></svg></button>
+    <button class="iconbtn iconbtn--onmedia" aria-label="保存"><svg class="icon"><use href="#i-download"/></svg></button>
+    <button class="iconbtn iconbtn--onmedia" aria-label="削除"><svg class="icon"><use href="#i-trash"/></svg></button>
+  </div>
+</div>`,
+    init(d, u) {
+      const v = u.$('.viewer', d)
+      u.$('.viewer__slide', d).onclick = () => v.classList.toggle('viewer--bare')
+    },
+  },
+
+  {
+    id: 'player',
+    name: '動画の操作',
+    m3: '（M3 に無い）',
+    group: '写真と動画',
+    file: 'media',
+    doc: '21-media',
+    tags: 'video player controls 動画 再生 プレイヤー',
+    note: 'ネイティブの `controls` を出さない。OS ごとに顔が違い、そこだけ「Webページ」に見える。',
+    contracts: [
+      'トラックは白30%、値は白。テーマの primary は写真の上で消える',
+      'トラックの当たり判定は ::after で縦に ±16px 広げる（4px は掴めない）',
+    ],
+    w: 360,
+    h: 260,
+    html: `<div class="player">
+  <div style="aspect-ratio:16/9; background:var(--primary-container)"></div>
+  <div class="player__bar">
+    <button class="iconbtn iconbtn--onmedia" aria-label="再生"><svg class="icon"><use href="#i-play"/></svg></button>
+    <span class="player__time">0:34</span>
+    <div class="player__track"><div class="player__fill" style="--p:40%"></div></div>
+    <span class="player__time">1:24</span>
+    <button class="iconbtn iconbtn--onmedia" aria-label="全画面"><svg class="icon"><use href="#i-expand"/></svg></button>
+  </div>
+</div>`,
+  },
+
+  /* ============================================================ 残りもの */
+  {
+    id: 'login',
+    name: 'ログイン画面',
+    m3: '（M3 に無い）',
+    group: '残りもの',
+    file: 'extra',
+    doc: '09-components',
+    tags: 'login signin auth ログイン 認証 サインイン',
+    note: 'バーを持たない画面。body に .no-bars を付けて上下の占有量を 0 にする。中身は中央揃えだが、**入力だけ左寄せに戻す**。',
+    contracts: [
+      'body.no-bars を忘れない。忘れるとバーのぶんの余白が空いたまま中身が下にずれる',
+      '入力を中央揃えのままにしない。打った文字が中央から左右に伸びて読みにくい',
+    ],
+    w: 360,
+    h: 440,
+    html: `<div class="login">
+  <div class="login__brand">
+    <svg class="icon icon--lg" style="width:40px;height:40px;color:var(--primary)"><use href="#i-layers"/></svg>
+    <h1 class="login__title">アプリ名</h1>
+    <p class="muted">続けるにはログインしてください</p>
+  </div>
+
+  <div class="login__form">
+    <div class="field">
+      <label class="label" for="lg1">メールアドレス</label>
+      <input class="input" id="lg1" type="email" autocomplete="email" />
+    </div>
+    <div class="field">
+      <label class="label" for="lg2">パスワード</label>
+      <input class="input" id="lg2" type="password" autocomplete="current-password" />
+    </div>
+    <button class="btn btn--filled btn--full">ログイン</button>
+    <button class="btn btn--text login__alt">別の方法で入る</button>
+  </div>
+</div>`,
+  },
+
+  {
+    id: 'sortable',
+    name: 'ドラッグ並べ替え',
+    m3: '（M3 に無い）',
+    group: '残りもの',
+    file: 'extra',
+    doc: '12-gestures',
+    tags: 'sortable drag drop reorder dnd 並べ替え ドラッグ',
+    note: '★左の掴み手（⋮⋮）を引いてみる★ 指の量に 1:1 で追従し、他の行がバネで滑って場所を空ける。',
+    contracts: [
+      'HTML5 の drag & drop を使わない。触る画面で動かず、ゴーストの見た目も制御できない',
+      '掴んでいる間は transition を持たせない（指に付いてこなくなる）',
+      'will-change は掴んでいる間だけ。常設すると一覧の全行が合成レイヤになる',
+      '掴み手が無いときは長押し 400ms。無いとスクロールと取り合う',
+    ],
+    h: 300,
+    html: `<div class="panel"><div class="rowlist sortable">
+  <div class="row">
+    <span class="sortable__grip"><svg class="icon"><use href="#i-grip"/></svg></span>
+    <div class="row__main"><span class="row__title">食費</span></div>
+    <span class="row__value">38,420</span>
+  </div>
+  <div class="row">
+    <span class="sortable__grip"><svg class="icon"><use href="#i-grip"/></svg></span>
+    <div class="row__main"><span class="row__title">家賃</span></div>
+    <span class="row__value">72,000</span>
+  </div>
+  <div class="row">
+    <span class="sortable__grip"><svg class="icon"><use href="#i-grip"/></svg></span>
+    <div class="row__main"><span class="row__title">交通</span></div>
+    <span class="row__value">9,860</span>
+  </div>
+</div></div>`,
+    init: (d, u) => u.sortable(d, u.$('.sortable', d), '.row', '.sortable__grip'),
+  },
+
+  {
+    id: 'agenda',
+    name: '予定表',
+    m3: '（M3 に無い）',
+    group: '残りもの',
+    file: 'extra',
+    doc: '09-components',
+    tags: 'agenda schedule calendar event week 予定 日程 週',
+    note: '日付を**選ぶ**のは `.cal`、予定を**見る**のはこちら。携帯は日ごとの一覧（.agenda）、広い画面では週の時間割（.week）。',
+    contracts: [
+      '月のマス目に予定を詰め込まない。携帯では読めない',
+      '予定が無い日も行ごと消さない。消すと日付が飛んで「その日が存在しない」ように見える',
+    ],
+    h: 380,
+    html: `<div class="agenda">
+  <div class="agenda__day agenda__day--today">
+    <div class="agenda__date"><span class="agenda__n">3</span><span class="agenda__dow">木</span></div>
+    <div class="agenda__items">
+      <button class="agenda__item">
+        <div class="row__main"><span class="row__title">歯医者</span></div>
+        <span class="agenda__when">10:00</span>
+      </button>
+      <button class="agenda__item" style="--accent:var(--tertiary)">
+        <div class="row__main"><span class="row__title">買い出し</span></div>
+        <span class="agenda__when">終日</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="agenda__day">
+    <div class="agenda__date"><span class="agenda__n">4</span><span class="agenda__dow">金</span></div>
+    <div class="agenda__items"><div class="agenda__none">予定なし</div></div>
+  </div>
+
+  <div class="agenda__day">
+    <div class="agenda__date"><span class="agenda__n">5</span><span class="agenda__dow">土</span></div>
+    <div class="agenda__items">
+      <button class="agenda__item" style="--accent:var(--error)">
+        <div class="row__main"><span class="row__title">家賃の引き落とし</span></div>
+        <span class="agenda__when">終日</span>
+      </button>
+    </div>
+  </div>
+</div>`,
+  },
+
+  {
+    id: 'print',
+    name: '印刷',
+    m3: '（M3 に無い）',
+    group: '残りもの',
+    file: 'print',
+    doc: '09-components',
+    tags: 'print pdf paper 印刷 紙 領収書',
+    note: '★プレビューの中で ⌘P すると効きが見える★ 紙は「触れない画面」。操作を全部消して、中身だけを黒で置く。',
+    contracts: [
+      'ダークテーマのまま刷らせない。トナーを食い潰し、しかも読めない',
+      '影は紙の上でただの灰色の帯になる。層は罫線で表す',
+      '畳んである <details> は開いて刷る（紙には「押して開く」が無い）',
+      '外部リンクは URL を後ろに出す（紙では押せないので行き先が分からない）',
+    ],
+    h: 340,
+    html: `<div class="panel"><div class="panel__body">
+  <h2 class="label">領収書</h2>
+  <div class="rowlist">
+    <div class="row"><div class="row__main"><span class="row__title">品名</span></div>
+      <span class="row__value">12,340</span></div>
+    <div class="row"><div class="row__main"><span class="row__title">消費税</span></div>
+      <span class="row__value">1,234</span></div>
+  </div>
+  <button class="btn"><svg class="icon icon--sm"><use href="#i-print"/></svg>印刷する（このボタンは紙には出ない）</button>
+</div></div>`,
+    init(d, u) {
+      u.$('.btn', d).onclick = () => d.defaultView.print()
+    },
+  },
+
   /* ============================================================ 文字 */
   {
     id: 'avatar',
@@ -2155,6 +2522,52 @@ export const CATALOG = [
   </div>
 </div></div>`,
   },
+  {
+    id: 'icons',
+    name: 'アイコン',
+    m3: 'Lucide（ISC）',
+    group: '文字',
+    file: '—（starter/icons/sprite.svg）',
+    doc: '22-icons',
+    tags: 'icon icons lucide symbol svg アイコン 記号',
+    note: 'Lucide を使う。M3 の作法（線で描く・currentColor・丸い端点・24 格子）と最初から一致していて、違うのは太さだけ（`.icon` の CSS が上書きする）。★下は実際に焼いてある 106 個★ 押すと id をコピーする。',
+    contracts: [
+      '2,050 個を全部配らない。scripts/gen-icons.mjs の NAMES に書いたものだけ焼く',
+      '名前は用途で付ける（i-house ではなく i-home）。見た目で付けると絵を差し替えたとき名前が嘘になる',
+      'fill: currentColor に切り替えない。線で描いたアイコンは塗りにするとただの塊になる',
+      'アイコンだけのボタンには aria-label を必ず付ける',
+    ],
+    h: 480,
+    html: `<!-- 起動時に1回だけ: document.body.insertAdjacentHTML('afterbegin', SPRITE) -->
+<svg class="icon icon--sm"><use href="#i-check" /></svg>
+<svg class="icon"><use href="#i-search" /></svg>
+<svg class="icon icon--lg"><use href="#i-upload" /></svg>
+
+<div class="iconlist"></div>`,
+    init(d, u) {
+      const box = u.$('.iconlist', d)
+      box.style.cssText =
+        'display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:8px;margin-top:16px'
+      const ids = [...d.querySelectorAll('symbol')].map((s) => s.id).sort()
+      box.innerHTML = ids
+        .map(
+          (id) =>
+            `<button class="btn btn--text" style="flex-direction:column;gap:4px;min-height:64px;padding:4px" data-id="${id}">` +
+            `<svg class="icon"><use href="#${id}"/></svg>` +
+            `<span style="font-family:var(--font-num);font-size:var(--t-label-s);color:var(--on-surface-variant);max-width:80px;overflow:hidden;text-overflow:ellipsis">${id.slice(2)}</span>` +
+            `</button>`,
+        )
+        .join('')
+      box.addEventListener('click', (e) => {
+        const b = e.target.closest('[data-id]')
+        if (!b) return
+        const code = `<svg class="icon"><use href="#${b.dataset.id}" /></svg>`
+        d.defaultView.navigator.clipboard?.writeText(code)
+        u.toast(d, `${b.dataset.id} をコピーしました`)
+      })
+    },
+  },
+
 ]
 
 export const GROUPS = [...new Set(CATALOG.map((e) => e.group))]

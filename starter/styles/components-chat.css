@@ -1,0 +1,317 @@
+/* ============================================================
+   会話 — 吹き出し・入力帯・ストリーミング
+
+   チャットは「一覧」ではなく「会話」。並んでいるものが等価な項目ではなく、
+   時間順の発話なので、リストの作法をそのまま持ち込むと読めなくなる。
+     - 区切り線を引かない（発話は独立した項目ではない）
+     - 自分と相手を**左右**で分ける（色だけで分けない）
+     - 新しいものが下。読み込みは上に足す
+
+   ★入力帯は下に貼り付ける★ 会話は「打つ」ためのものなので、
+   入力欄が指の届く場所から動かないことが最優先。
+   ============================================================ */
+
+/* ============================================================
+   1. 会話の入れ物
+   ★.main の代わりにこれを使う★ 縦の flex 列で、上が流れる場所、
+   下が入力帯。入力帯は .main の padding-bottom では避けられない
+   （キーボードが出たときに一緒に上がってほしいため）
+   ============================================================ */
+.chat {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  /* 外殻のバーぶんは自分で避ける */
+  padding-top: var(--inset-top);
+  padding-left: var(--inset-start);
+}
+
+.chat__log {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  padding: var(--s-4);
+  /* ★下から積む★ 発話が少ないうちは下に寄せる。上に寄せると、
+     入力帯との間に広い空白ができて「壊れている」ように見える */
+  justify-content: flex-end;
+}
+
+/* 中身が入りきったら、上から流す（justify-content: flex-end のままだと
+   古い発話が上に切れて掴めなくなる） */
+.chat__log > * {
+  flex: 0 0 auto;
+}
+
+/* 日付・「ここから未読」などの区切り */
+.chat__mark {
+  align-self: center;
+  padding: 2px var(--s-3);
+  border-radius: var(--shape-full);
+  background: var(--surface-mid);
+  color: var(--on-surface-variant);
+  font-size: var(--t-label-m);
+  font-weight: var(--w-medium);
+}
+
+/* ============================================================
+   2. 発話
+   ============================================================ */
+.msg {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  /* ★吹き出しは中身なりの幅★ 1文字の返事が画面幅いっぱいにならない */
+  align-items: flex-start;
+  max-width: 100%;
+}
+
+/* 自分の発話。右に寄せ、primary で塗る */
+.msg--me {
+  align-items: flex-end;
+}
+
+.msg__bubble {
+  max-width: min(84%, 620px);
+  padding: var(--s-2) var(--s-3);
+  border-radius: var(--shape-lg2);
+  background: var(--surface-high);
+  color: var(--on-surface);
+  font-size: var(--t-body-l);
+  line-height: var(--lh-body);
+  /* ★選択できるようにする★ base.css で切ってあるが、会話の中身は
+     コピーされるためにある */
+  -webkit-user-select: text;
+  user-select: text;
+  /* 空白の無い長い英字（URL・ID）で横に溢れさせない */
+  overflow-wrap: anywhere;
+}
+
+.msg--me .msg__bubble {
+  background: var(--primary);
+  color: var(--on-primary);
+}
+
+/* 続けて話しているときは、隣り合う角だけ小さくして「ひと続き」に見せる */
+.msg--cont .msg__bubble {
+  border-radius: var(--shape-sm) var(--shape-lg2) var(--shape-lg2) var(--shape-lg2);
+}
+
+.msg--me.msg--cont .msg__bubble {
+  border-radius: var(--shape-lg2) var(--shape-sm) var(--shape-lg2) var(--shape-lg2);
+}
+
+/* 時刻・既読。★吹き出しの外に出す★ 中に入れると、短い返事のときに
+   本文より時刻のほうが幅を決めてしまう */
+.msg__meta {
+  display: flex;
+  align-items: center;
+  gap: var(--s-1);
+  padding: 0 var(--s-2);
+  color: var(--on-surface-variant);
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--t-label-s);
+}
+
+/* 送信中。★消さずに薄くする★ 送った直後に消えると「失敗した」に見える */
+.msg--pending .msg__bubble {
+  opacity: 0.6;
+}
+
+/* 送信に失敗した。もう一度押せるようにする */
+.msg--failed .msg__bubble {
+  background: var(--error-container);
+  color: var(--on-error-container);
+}
+
+.msg__retry {
+  align-self: flex-end;
+}
+
+/* 発話に付ける操作（コピー・やり直し）。★常に出す★
+   hover でしか出ないと、触る画面では永久に見つからない */
+.msg__acts {
+  display: flex;
+  gap: var(--s-1);
+  padding: 0 var(--s-1);
+}
+
+.msg__acts .iconbtn {
+  width: 36px;
+  height: 36px;
+}
+
+.msg__acts .icon {
+  width: 18px;
+  height: 18px;
+}
+
+/* AI の返答の中身は .prose で描く（components-data.css） */
+.msg__bubble .prose {
+  font-size: inherit;
+}
+
+.msg__bubble .prose > * + * {
+  margin-top: var(--s-3);
+}
+
+/* ============================================================
+   3. 返事を書いている / 流れてくる途中
+
+   ★点が3つ跳ねるアニメーションにしない★ 待たされている時間を
+   ただ強調するだけになる。M3 の読み込みの印（形が変わる）と同じ考えで、
+   「進んでいる」ことだけを静かに示す
+   ============================================================ */
+.msg__typing {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  color: var(--on-surface-variant);
+  font-size: var(--t-body-m);
+}
+
+/* 文字が流れてくる間、末尾に置く棒。★点滅させない★
+   点滅は目を引きすぎて、肝心の文字が読めなくなる */
+.msg__caret {
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  margin-left: 2px;
+  vertical-align: -0.15em;
+  border-radius: 1px;
+  background: currentColor;
+  opacity: 0.7;
+}
+
+/* 流れている間だけ出す「止める」ボタン。入力帯の上に浮かせる */
+.chat__stop {
+  align-self: center;
+  margin-bottom: var(--s-2);
+}
+
+/* 一番下から離れたときだけ出す「最新へ」。small FAB */
+.chat__jump {
+  position: absolute;
+  right: var(--s-4);
+  bottom: calc(var(--composer-h, 72px) + var(--s-3));
+  z-index: var(--z-float);
+  width: 40px;
+  height: 40px;
+  border-radius: var(--shape-md);
+  display: grid;
+  place-items: center;
+  background: var(--surface-high);
+  color: var(--on-surface);
+  box-shadow: var(--elev-2);
+}
+
+/* ============================================================
+   4. 入力帯（composer）
+   ★下端に貼り付ける★ 高さは中身で伸びる（最大 5行ぶん）
+   ============================================================ */
+.composer {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: flex-end;
+  gap: var(--s-2);
+  padding: var(--s-2) var(--s-3) calc(var(--s-2) + var(--safe-bottom));
+  background: var(--surface-mid);
+}
+
+/* ナビゲーションバーと同居するときは、そのぶん持ち上げる */
+.composer--above-bar {
+  padding-bottom: calc(var(--inset-bottom) + var(--s-2));
+}
+
+/* 入力そのもの。M3 の search bar と同じピル */
+.composer__input {
+  flex: 1;
+  min-width: 0;
+  /* ★1行のときは 48、伸びても最大 5行ぶん★ 無制限に伸ばすと
+     画面が入力欄で埋まる */
+  min-height: 48px;
+  max-height: 132px;
+  padding: var(--s-3) var(--s-4);
+  border: 0;
+  border-radius: var(--shape-xl);
+  background: var(--surface-highest);
+  color: var(--on-surface);
+  /* ★16px を下回らせない★ iOS がフォーカスで画面を拡大して戻さなくなる */
+  font-size: var(--t-input);
+  line-height: var(--lh-snug);
+  resize: none;
+  overflow-y: auto;
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+.composer__input:focus {
+  outline: none;
+  box-shadow: inset 0 0 0 2px var(--primary);
+}
+
+.composer__input::placeholder {
+  color: var(--on-surface-variant);
+  opacity: 1;
+}
+
+/* 送信。filled icon button（48 の円） */
+.composer__send {
+  flex: 0 0 auto;
+  width: 48px;
+  height: 48px;
+  border-radius: var(--shape-full);
+  display: grid;
+  place-items: center;
+  background: var(--primary);
+  color: var(--on-primary);
+  --send-layer: transparent;
+  box-shadow: inset 0 0 0 999px var(--send-layer);
+  transition:
+    border-radius var(--d-spatial-fast) var(--ease-spatial-fast),
+    background-color var(--d-effects) var(--ease-effects),
+    box-shadow var(--d-tap) var(--ease-effects);
+}
+
+.composer__send:active,
+.composer__send.is-pressed {
+  border-radius: var(--shape-md);
+  --send-layer: rgb(255 255 255 / 0.14);
+}
+
+/* ★空のときも押せる見た目のままにしない★ ただし消しもしない
+   （消えると「送るところが無い」画面になる） */
+.composer__send:disabled {
+  background: rgb(var(--on-surface-rgb) / 0.12);
+  color: rgb(var(--on-surface-rgb) / 0.38);
+  cursor: not-allowed;
+}
+
+/* 添付・音声などの脇役 */
+.composer__act {
+  flex: 0 0 auto;
+  width: 48px;
+  height: 48px;
+  border-radius: var(--shape-full);
+  display: grid;
+  place-items: center;
+  color: var(--on-surface-variant);
+}
+
+/* 入力帯の上に出す添付の一覧 */
+.composer__attached {
+  display: flex;
+  gap: var(--s-2);
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding: 0 var(--s-3) var(--s-2);
+}
+
+.composer__attached::-webkit-scrollbar {
+  display: none;
+}

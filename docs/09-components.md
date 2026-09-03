@@ -11,7 +11,7 @@ JS が要るところだけ「**JS**」と注記してある。
 
 ---
 
-## 一覧（70 部品）
+## 一覧（80 部品）
 
 | 分類 | 部品 | クラス | ファイル |
 |---|---|---|---|
@@ -80,7 +80,17 @@ JS が要るところだけ「**JS**」と注記してある。
 | | 読み込みの印 | `.loader` | core |
 | | 手順 | `.steps` | data |
 | | 年表 | `.timeline` | data |
-| 文字 | アバター | `.avatar` | data |
+| 会話 | チャット（吹き出し） | `.chat` `.msg` | chat |
+| | 入力帯 | `.composer` | chat |
+| 写真と動画 | 写真グリッド | `.gallery` `.tile` | media |
+| | 全画面ビューア | `.viewer` | media |
+| | 動画の操作 | `.player` | media |
+| 残りもの | ログイン画面 | `.login` | extra |
+| | ドラッグ並べ替え | `.sortable` | extra |
+| | 予定表（日 / 週） | `.agenda` `.week` | extra |
+| | 印刷 | `@media print` | print |
+| 文字 | アイコン | `.icon` + Lucide | icons |
+| | アバター | `.avatar` | data |
 | | 数値 | `.stat` | core |
 | | 本文（markdown） | `.prose` | data |
 | | コード欄・キー | `.code` `.kbd` | data |
@@ -640,6 +650,18 @@ M3 list item / 1行 56 / 2行 72 / 区切りは outline-variant 1px を 16 イ�
 
 `.ring` / `.meter__fill--over` は 100% 超えで error。読み込みの印は
 `attachLoader(pathEl)`（**JS**）。全画面スピナーは禁止。
+
+---
+
+# 会話 / 写真と動画 / 残りもの
+
+→ [20-chat](20-chat.md)（吹き出し・入力帯・ストリーミング）
+→ [21-media](21-media.md)（グリッド・全画面ビューア・共有要素・動画）
+→ [22-icons](22-icons.md)（Lucide の焼き込み方と規約）
+
+ログイン画面（`.login`）・ドラッグ並べ替え（`.sortable` + `lib/sortable.ts`）・
+予定表（`.agenda` / `.week`）・印刷（`print.css`）は
+`components-extra.css` と `print.css`。図鑑で見るのがいちばん早い。
 
 ---
 

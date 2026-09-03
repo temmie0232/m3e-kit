@@ -19,10 +19,18 @@
                      分割ボタン・FABメニュー・ドロップ領域・評価）
      -data           見せるもの（アバター・表・カルーセル・木・手順・
                      年表・図・本文・コード）
+     -chat           会話（吹き出し・入力帯・ストリーミング）
+     -media          写真と動画（グリッド・全画面ビューア・共有要素）
+     -extra          ログイン画面・ドラッグ並べ替え・予定表
+     print           紙とPDF（★必ず最後★ @media print で全部を倒す）
 
    ★順番を変えないこと★ 後ろのファイルが前のファイルを上書きする前提で
    書いてある（例: components-overlay の .dialog--alert は
    components-core の .dialog を上書きする）。
+
+   使わない分類は @import ごと外してよい（例: 写真を扱わないアプリなら
+   -media）。★print だけは外さない★ 何もしないと、ダークテーマのまま
+   刷られてトナーを食い潰す。
    ============================================================ */
 
 @import './base.css';
@@ -31,3 +39,7 @@
 @import './components-overlay.css';
 @import './components-form.css';
 @import './components-data.css';
+@import './components-chat.css';
+@import './components-media.css';
+@import './components-extra.css';
+@import './print.css';

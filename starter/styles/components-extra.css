@@ -1,0 +1,279 @@
+/* ============================================================
+   残りもの
+   ログイン画面・ドラッグ並べ替え・予定表（日/週）
+   ============================================================ */
+
+/* ============================================================
+   1. ログイン画面
+   ★バーを持たない★ body に .no-bars を付けて、上下の占有量を 0 にする。
+   これをやらないと、バーのぶんの余白が空いたまま中身が下にずれる
+   ============================================================ */
+.login {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--s-6);
+  min-height: 100%;
+  max-width: 380px;
+  margin-inline: auto;
+  padding: max(var(--s-6), var(--safe-top)) var(--s-6) max(var(--s-6), var(--safe-bottom));
+  text-align: center;
+}
+
+.login__brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+.login__title {
+  margin: 0;
+  font-size: var(--t-headline-s);
+  line-height: var(--lh-headline-s);
+  font-weight: var(--w-medium);
+}
+
+/* ★入力は左寄せに戻す★ 中央揃えの中に入力欄を置くと、打った文字が
+   中央から左右に伸びて読みにくい */
+.login .field,
+.login .notice {
+  text-align: left;
+}
+
+.login__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+}
+
+/* 「別の方法で入る」。主要操作の下に text button で置く */
+.login__alt {
+  align-self: center;
+}
+
+/* ============================================================
+   2. ドラッグで並べ替える
+   実装は lib/sortable.ts（HTML5 の drag & drop は使わない。
+   触る画面で動かず、ゴーストの見た目も制御できない）
+   ============================================================ */
+.sortable {
+  position: relative;
+}
+
+/* 掴んでいる行。浮かせて、下の行が滑るのを見せる */
+.sortable .is-dragging {
+  position: relative;
+  z-index: 1;
+  border-radius: var(--shape-md);
+  background: var(--surface-high);
+  box-shadow: var(--elev-3);
+  /* ★掴んでいる間は transition を持たせない★ 指に 1:1 で付いてこなくなる */
+  transition: none;
+}
+
+/* 掴む場所。★これがあるときは長押しが要らない★
+   無いときは長押し 400ms（そうしないとスクロールと取り合う） */
+.sortable__grip {
+  flex: 0 0 auto;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  color: var(--outline);
+  cursor: grab;
+  /* 縦の動きを自前で拾う */
+  touch-action: none;
+}
+
+.sortable .is-dragging .sortable__grip {
+  cursor: grabbing;
+  color: var(--on-surface-variant);
+}
+
+/* ============================================================
+   3. 予定表
+
+   ★日付を「選ぶ」のは .cal（date picker）、「予定を見る」のはこちら★
+   月のマス目に予定を詰め込むのは携帯では読めない。
+   携帯は日ごとの一覧（.agenda）、広い画面では週の時間割（.week）にする
+   ============================================================ */
+
+/* ---------------------------------------------------------- 日ごとの一覧 */
+.agenda {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-5);
+}
+
+.agenda__day {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr);
+  gap: var(--s-3);
+}
+
+/* 左の日付。数字を大きく、曜日を小さく */
+.agenda__date {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding-top: var(--s-1);
+}
+
+.agenda__n {
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--t-title-l);
+  line-height: 1;
+  font-weight: var(--w-medium);
+}
+
+.agenda__dow {
+  font-size: var(--t-label-s);
+  color: var(--on-surface-variant);
+}
+
+/* 今日。★丸で囲む★ .cal__day--today と同じ作法（塗らない） */
+.agenda__day--today .agenda__n {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--shape-full);
+  background: var(--primary);
+  color: var(--on-primary);
+}
+
+.agenda__items {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  min-width: 0;
+}
+
+/* 1件の予定。左に色の帯（種類）、右に時刻 */
+.agenda__item {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  min-height: 48px;
+  padding: var(--s-2) var(--s-3);
+  border-radius: var(--shape-md);
+  background: var(--surface-mid);
+  text-align: left;
+  width: 100%;
+  /* 種類の色は --accent で渡す。既定は primary */
+  box-shadow: inset 3px 0 0 var(--accent, var(--primary));
+}
+
+.agenda__item .row__main {
+  flex: 1;
+  min-width: 0;
+}
+
+.agenda__when {
+  flex: 0 0 auto;
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--t-body-s);
+  color: var(--on-surface-variant);
+}
+
+/* 予定が無い日。★行ごと消さない★ 消すと日付が飛んで、
+   「その日が存在しない」ように見える */
+.agenda__none {
+  display: flex;
+  align-items: center;
+  min-height: 40px;
+  color: var(--outline);
+  font-size: var(--t-body-m);
+}
+
+/* ---------------------------------------------------------- 週の時間割 */
+.week {
+  display: grid;
+  /* 左の時刻の列 + 7日 */
+  grid-template-columns: 48px repeat(7, minmax(0, 1fr));
+  overflow-x: auto;
+  background: var(--surface-mid);
+  border-radius: var(--shape-lg);
+}
+
+.week__head {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: var(--s-2) 0;
+  text-align: center;
+  background: var(--surface-mid);
+  box-shadow: inset 0 -1px 0 var(--outline-variant);
+  font-size: var(--t-label-m);
+  font-weight: var(--w-medium);
+  color: var(--on-surface-variant);
+}
+
+.week__head--today {
+  color: var(--primary);
+}
+
+/* 左端の時刻。★行の頭ではなく境目に置く★ 「9時の行」ではなく
+   「9時の線」なので、少し持ち上げて線に合わせる */
+.week__hour {
+  padding-right: var(--s-2);
+  text-align: right;
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--t-label-s);
+  color: var(--on-surface-variant);
+  transform: translateY(-0.5em);
+}
+
+.week__cell {
+  min-height: 44px;
+  box-shadow:
+    inset 0 -1px 0 var(--outline-variant),
+    inset -1px 0 0 var(--outline-variant);
+  position: relative;
+}
+
+/* 予定の箱。上端と高さは JS が --top / --h（px）で渡す */
+.week__ev {
+  position: absolute;
+  left: 2px;
+  right: 2px;
+  top: var(--top, 0);
+  height: var(--h, 44px);
+  overflow: hidden;
+  padding: 2px var(--s-1);
+  border-radius: var(--shape-xs);
+  background: var(--secondary-container);
+  color: var(--on-secondary-container);
+  box-shadow: inset 2px 0 0 var(--accent, var(--primary));
+  font-size: var(--t-label-s);
+  line-height: 1.3;
+  text-align: left;
+}
+
+/* いまの時刻の線 */
+.week__now {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: var(--top, 0);
+  height: 2px;
+  background: var(--error);
+  z-index: 2;
+  pointer-events: none;
+}
+
+.week__now::before {
+  content: '';
+  position: absolute;
+  left: -4px;
+  top: -3px;
+  width: 8px;
+  height: 8px;
+  border-radius: var(--shape-full);
+  background: var(--error);
+}
