@@ -686,6 +686,9 @@ body.no-bars {
    appearance: base-select が入った環境では <select> の一覧が普通の要素になり、
    .menu と同じ見た目にできる。入っていない環境は今までどおり OS の一覧が出る
    （宣言ごと捨てられるだけなので壊れない） */
+/* ★lib/press.ts の watchPress() を必ず入れること★
+   これを当てた <select> は、**指では何度押しても閉じない**（マウスでは閉じる）。
+   閉じられるようにするのは JS 側の1行。詳しくは docs/17-forms.md */
 @supports (appearance: base-select) {
   .select {
     appearance: base-select;

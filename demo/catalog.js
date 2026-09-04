@@ -807,8 +807,9 @@ export const CATALOG = [
     file: 'core',
     doc: '17-forms',
     tags: 'select dropdown option プルダウン 選択',
-    note: 'ネイティブの ▾ を消して自前の山形に差し替えてある。OS 既定の矢印は「Webページ」の顔を作る最後の一手。',
+    note: 'ネイティブの ▾ を消し、開いた一覧まで自前で描いてある（appearance: base-select）。OS 既定の矢印と一覧は「Webページ」の顔を作る最後の一手。',
     contracts: [
+      'lib/press.ts の watchPress() を入れる。無いと**指では何度押しても閉じない**（マウスでは閉じるので気づきにくい）',
       'background-color で書く（短縮形にすると、自前の山形がフォーカスのたびに消える）',
       '選択肢が 10 個を超えて探したくなるなら .combo に切り替える',
     ],

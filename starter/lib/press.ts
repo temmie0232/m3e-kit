@@ -22,7 +22,36 @@ function release() {
   }
 }
 
+/** `:open`（開いているプルダウン）を書けるか。書けない環境では <select> の
+ *  一覧は OS 描画のモーダルなので、下の細工そのものが要らない */
+const canMatchOpen = typeof CSS !== 'undefined' && (CSS.supports?.('selector(:open)') ?? false)
+
 export function watchPress(root: Document | HTMLElement = document) {
+  /* ★開いているプルダウンは、本体をもう一度押したら閉じる★
+   *
+   * `appearance: base-select` を当てた <select>（components-core.css）は、
+   * **指では何度押しても閉じない**。マウスでは閉じるので気づきにくい。
+   * 一覧はポップオーバーなので指が触れた時点で light-dismiss が閉じるのだが、
+   * 同じ操作の既定の動作が直後に開き直してしまう。
+   * 既定だけ止めれば light-dismiss が残って、開く→閉じる→開くになる。
+   *
+   * 実測（chromium 151・指の tap を3回）:
+   *   何もしない        → 開く / 開く / 開く
+   *   ここで既定を止める → 開く / 閉じる / 開く
+   *
+   * ★blur() を足さないこと★ 閉じはするがフォーカスまで飛ぶ（キーボード操作が切れる）
+   * ★このリスナだけ passive にしない★ passive では preventDefault が効かない */
+  root.addEventListener('pointerdown', (e) => {
+    const target = e.target as Element | null
+    const sel = target?.closest?.('select')
+    /* ★選択肢の上では止めないこと★ base-select では <option> も <select> の
+       子のままなので、closest('select') だけで判定すると**選ぶ操作まで止まる**
+       （タップしても値が変わらない。実際に踏んだ） */
+    if (sel && canMatchOpen && sel.matches(':open') && !target?.closest?.('option, optgroup')) {
+      e.preventDefault()
+    }
+  })
+
   root.addEventListener(
     'pointerdown',
     (e) => {

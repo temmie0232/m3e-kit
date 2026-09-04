@@ -37,7 +37,7 @@ import { watchPress } from './lib/press'
 import { watchMotionPrefs } from './lib/motion'
 
 initTheme()        // 明暗とシードを復元し、アドレスバーの色も合わせる
-watchPress()       // pointerdown で .is-pressed を付ける（押下の即時反応）
+watchPress()       // 押下の即時反応（.is-pressed）＋ プルダウンを指で閉じられるようにする
 watchMotionPrefs() // 本物のバネ曲線を --ease-* / --d-* に焼く
 ```
 

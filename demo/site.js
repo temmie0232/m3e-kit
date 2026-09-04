@@ -82,12 +82,28 @@ const PRESSABLE = [
   '.rating__star', '.tabs__item', '.command__item', '.dial__n',
 ].join(', ')
 
+/** `:open` を書けるか（lib/press.ts と同じ判定） */
+const canMatchOpen = CSS.supports?.('selector(:open)') ?? false
+
 function attachPress(d) {
   let cur = null
   const release = () => {
     cur?.classList.remove('is-pressed')
     cur = null
   }
+
+  /* 開いているプルダウンを、本体のもう一度の押下で閉じる。
+     ★lib/press.ts と同じ細工★ 理由はあちらのコメントに書いてある
+     （指では何度押しても閉じない。既定を止めると light-dismiss が残る）。
+     ここだけ passive にしない — passive では preventDefault が効かない */
+  d.addEventListener('pointerdown', (e) => {
+    const sel = e.target.closest?.('select')
+    /* ★<option> の上では止めない★ 止めると選べなくなる（press.ts と同じ） */
+    if (sel && canMatchOpen && sel.matches(':open') && !e.target.closest?.('option, optgroup')) {
+      e.preventDefault()
+    }
+  })
+
   d.addEventListener(
     'pointerdown',
     (e) => {
